@@ -2,53 +2,55 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Logística PRO - SIN IVA (Full)</title>
+    <title>Logística PRO - SIN IVA</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #27ae60; --blue: #2980b9; --orange: #e67e22; --red: #e74c3c; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        /* Pantalla de Bloqueo */
-        #lockscreen { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .login-card { background: white; padding: 30px; border-radius: 12px; display: flex; flex-direction: column; gap: 15px; }
-        .login-card input { padding: 10px; font-size: 18px; text-align: center; border: 2px solid #ddd; border-radius: 6px; color: #333; }
         
+        /* PANTALLA DE BLOQUEO */
+        #lockscreen { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: white; padding: 40px; border-radius: 15px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .login-card input { display: block; width: 200px; padding: 12px; margin: 20px 0; font-size: 20px; border: 2px solid #ddd; border-radius: 8px; text-align: center; }
+        
+        /* DISEÑO ORIGINAL */
         .sidebar { width: 220px; background: var(--primary); color: white; padding: 20px; display: flex; flex-direction: column; flex-shrink: 0; }
         .search-box { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: none; font-size: 13px; box-sizing: border-box; }
-        .truck-item { padding: 10px; background: rgba(255,255,255,0.1); margin-bottom: 8px; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .truck-item { padding: 10px; background: rgba(255,255,255,0.1); margin-bottom: 8px; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .truck-item.active { background: var(--blue); font-weight: bold; }
         .main-wrapper { display: flex; flex-grow: 1; overflow: hidden; }
         .main { flex-grow: 1; padding: 20px; overflow-y: auto; display: none; }
+        .right-panels { width: 280px; background: #fff; border-left: 2px solid #ddd; display: flex; flex-direction: column; overflow-y: auto; }
+        .panel-section { padding: 20px; border-bottom: 1px solid #eee; }
         .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; border-top: 5px solid var(--primary); }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; }
-        .field { display: flex; flex-direction: column; }
-        label { font-size: 11px; font-weight: bold; color: #777; margin-bottom: 4px; }
-        input, select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; background: white; margin-top: 10px; }
-        th { background: #f1f5f9; padding: 12px; border-bottom: 2px solid #cbd5e1; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; }
+        label { font-size: 10px; font-weight: bold; color: #777; text-transform: uppercase; }
+        input, select { padding: 7px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th { background: #f1f5f9; padding: 10px; border-bottom: 2px solid #cbd5e1; }
         td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; }
-        .resumen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
-        .resumen-box { background: white; padding: 15px; border-radius: 10px; border-left: 5px solid var(--blue); }
-        .btn { padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; }
+        .btn { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; width: 100%; }
+        .sum-card { background: white; padding: 10px; border-radius: 8px; text-align: right; border-bottom: 4px solid var(--accent); flex: 1; }
     </style>
 </head>
 <body>
 
     <div id="lockscreen">
         <div class="login-card">
-            <h2 style="color: #333; margin: 0;">Acceso Privado</h2>
-            <input type="password" id="passInput" placeholder="Clave de acceso" onkeydown="if(event.key==='Enter') verificarPass()">
-            <button class="btn" style="background: var(--blue);" onclick="verificarPass()">Entrar</button>
+            <h2 style="color:#333">ACCESO PRIVADO</h2>
+            <input type="password" id="passInput" placeholder="Clave" onkeydown="if(event.key==='Enter') verificar()">
+            <button class="btn" style="background:var(--blue)" onclick="verificar()">ENTRAR</button>
         </div>
     </div>
 
     <div class="sidebar">
-        <h3>VIAJES SIN IVA</h3>
-        <input type="text" id="buscador" class="search-box" placeholder="Buscar chofer..." oninput="renderSidebar()">
+        <h3>SIN IVA</h3>
+        <input type="text" id="buscador" class="search-box" placeholder="Buscar..." oninput="renderSidebar()">
         <div id="truckList" style="flex-grow:1; overflow-y:auto"></div>
-        <button onclick="nuevoCamion()" class="btn" style="background:var(--accent); margin-top:10px;">+ Nuevo Chofer</button>
-        <button onclick="verResumenGlobal()" class="btn" style="background:var(--orange); margin-top:5px;">📂 Ver Resumen Mensual</button>
+        <button onclick="nuevoCamion()" class="btn" style="background:var(--accent); margin-top:10px;">+ Chofer</button>
+        <button onclick="verResumenGlobal()" class="btn" style="background:var(--orange); margin-top:5px;">📂 Resumen</button>
     </div>
 
     <div class="main-wrapper">
@@ -59,31 +61,48 @@
                     <div class="field"><label>Fecha</label><input type="date" id="f_fecha" class="nav"></div>
                     <div class="field"><label>Detalle</label><input type="text" id="f_detalle" class="nav"></div>
                     <div class="field"><label>TN</label><input type="number" id="f_ton" class="nav"></div>
-                    <div class="field"><label>Tarifa $</label><input type="number" id="f_tar" class="nav"></div>
-                    <div class="field"><label>Descuento %</label><input type="number" id="f_desc" value="0" class="nav"></div>
-                    <div class="field"><label>Gasto/Adelanto $</label><input type="number" id="f_adel_val" class="nav"></div>
+                    <div class="field"><label>Tarifa</label><input type="number" id="f_tar" class="nav"></div>
+                    <div class="field"><label>Desc %</label><input type="number" id="f_desc" value="0" class="nav"></div>
+                    <div class="field"><label>Gasto $</label><input type="number" id="f_adel_val" class="nav"></div>
                 </div>
-                <button class="btn" style="background:var(--accent); margin-top:15px; width: auto;" onclick="guardar()">Cargar Registro</button>
+                <button class="btn" style="background:var(--accent); margin-top:10px; width:auto" onclick="guardar()">Cargar Registro</button>
             </div>
             <table>
-                <thead><tr><th>Fecha</th><th>Detalle</th><th>TN</th><th>Tarifa</th><th>Desc.</th><th>Neto</th><th>Gasto</th><th>Saldo</th><th>Acción</th></tr></thead>
+                <thead><tr><th>Sel.</th><th>Fecha</th><th>Detalle</th><th>TN</th><th>Tarifa</th><th>Desc.</th><th>Neto</th><th>Gasto</th><th>Saldo</th></tr></thead>
                 <tbody id="tablaCuerpo"></tbody>
             </table>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <div class="sum-card">NETO: <strong id="indNeto">$ 0</strong></div>
+                <div class="sum-card" style="border-color:var(--orange)">GASTOS: <strong id="indAdel">$ 0</strong></div>
+                <div class="sum-card">SALDO: <strong id="indFinal">$ 0</strong></div>
+            </div>
         </div>
 
         <div class="main" id="resumenSeccion">
-            <h2>📂 Resumen de Facturación Mensual</h2>
-            <div class="card" style="display:flex; gap:15px; align-items:flex-end;">
-                <div class="field"><label>Desde:</label><input type="date" id="resDesde"></div>
-                <div class="field"><label>Hasta:</label><input type="date" id="resHasta"></div>
-                <button class="btn" style="background:var(--blue);" onclick="calcularFacturacion()">Calcular Totales</button>
+            <h2>Resumen de Facturación</h2>
+            <div class="card" style="display:flex; gap:10px; align-items:flex-end">
+                <input type="date" id="resDesde"> <input type="date" id="resHasta">
+                <button class="btn" style="background:var(--blue); width:auto" onclick="calcularFacturacion()">Calcular</button>
             </div>
-            <div id="resultadoFacturacion" class="resumen-grid"></div>
+            <div id="resultadoFacturacion" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px"></div>
+        </div>
+
+        <div class="right-panels" id="panelDerecho" style="display:none">
+            <div class="panel-section">
+                <h3>💰 Liquidación</h3>
+                <div style="background:#f9f9f9; padding:10px; border-radius:8px">
+                    <label>Suma Seleccionada:</label>
+                    <div id="liq-subtotal" style="font-size:20px; font-weight:bold">$ 0</div>
+                </div>
+                <button class="btn" style="background:var(--blue); margin-top:10px" onclick="exportarPDF()">Exportar PDF</button>
+            </div>
+            <div class="panel-section">
+                <button class="btn" style="background:var(--red)" onclick="eliminarDesdeCheck()">✕ Borrar Seleccionados</button>
+            </div>
         </div>
     </div>
 
 <script>
-    // --- CONFIGURACIÓN FIREBASE ---
     const firebaseConfig = {
         apiKey: "AIzaSyCLBvSUo8NemdYL_zgP0Fo-tg8aLiggqgQ",
         authDomain: "viajes-con-iva.firebaseapp.com",
@@ -95,51 +114,34 @@
     };
     firebase.initializeApp(firebaseConfig);
     const dbRef = firebase.database().ref('viajes_SIN_IVA');
-    
-    let db = { camiones: [] };
-    let tIdx = null;
+    let db = { camiones: [] }; let tIdx = null;
 
-    // --- SEGURIDAD ---
-    function verificarPass() {
-        const pass = document.getElementById('passInput').value;
-        if(pass === "1234") { // <--- ACÁ CAMBIÁS TU CLAVE
+    function verificar() {
+        if(document.getElementById('passInput').value === "1234") {
             document.getElementById('lockscreen').style.display = 'none';
-        } else {
-            alert("Clave incorrecta");
-        }
+        } else { alert("Clave Incorrecta"); }
     }
 
-    // --- ENTER ENTRE INPUTS ---
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && e.target.classList.contains('nav')) {
             const inputs = Array.from(document.querySelectorAll('.nav'));
-            const index = inputs.indexOf(e.target);
-            if (index > -1 && index < inputs.length - 1) {
-                inputs[index + 1].focus();
-            } else if (index === inputs.length - 1) {
-                guardar();
-            }
+            const idx = inputs.indexOf(e.target);
+            if (idx < inputs.length - 1) inputs[idx + 1].focus();
+            else guardar();
         }
     });
 
-    dbRef.on('value', (s) => { 
-        db = s.val() || { camiones: [] }; 
-        renderSidebar(); 
-        if (tIdx !== null) renderTabla(); 
-    });
-
-    function save() { dbRef.set(db); }
+    dbRef.on('value', (s) => { db = s.val() || { camiones: [] }; renderSidebar(); if (tIdx !== null) renderTabla(); });
 
     function renderSidebar() {
-        const div = document.getElementById('truckList');
+        const div = document.getElementById('truckList'); div.innerHTML = "";
         const filtro = document.getElementById('buscador').value.toLowerCase();
-        div.innerHTML = "";
         if(!db.camiones) return;
         db.camiones.forEach((c, i) => {
             if (c.nombre.toLowerCase().includes(filtro)) {
                 const d = document.createElement('div');
                 d.className = `truck-item ${tIdx === i ? 'active' : ''}`;
-                d.innerHTML = `<span>${c.nombre}</span>`;
+                d.innerHTML = `<span>${c.nombre}</span><button onclick="eliminarChofer(event, ${i})" style="background:none; border:none; color:white">✕</button>`;
                 d.onclick = () => { tIdx = i; abrirChofer(); };
                 div.appendChild(d);
             }
@@ -149,90 +151,91 @@
     function abrirChofer() {
         document.getElementById('resumenSeccion').style.display = 'none';
         document.getElementById('mainGestion').style.display = 'block';
+        document.getElementById('panelDerecho').style.display = 'flex';
         document.getElementById('truckTitle').innerText = "Chofer: " + db.camiones[tIdx].nombre;
         renderTabla();
     }
 
     function renderTabla() {
-        const cuerpo = document.getElementById('tablaCuerpo');
-        cuerpo.innerHTML = "";
+        const cuerpo = document.getElementById('tablaCuerpo'); cuerpo.innerHTML = "";
+        let sNeto = 0, sAdel = 0, sFinal = 0;
         if (!db.camiones[tIdx].items) db.camiones[tIdx].items = [];
-        db.camiones[tIdx].items.forEach((item, idx) => {
+        db.camiones[tIdx].items.forEach(item => {
             const neto = (item.ton * item.tar) * (1 - (item.descP / 100));
             const saldo = neto - item.adelVal;
+            sNeto += neto; sAdel += item.adelVal; sFinal += saldo;
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${item.fecha}</td><td>${item.detalle}</td><td>${item.ton}</td><td>$${item.tar}</td><td>${item.descP}%</td><td>$${Math.round(neto)}</td><td>$${item.adelVal}</td><td><strong>$${Math.round(saldo)}</strong></td><td><button onclick="eliminarFila(${idx})" style="color:red; border:none; background:none; cursor:pointer">✕</button></td>`;
+            tr.innerHTML = `<td><input type="checkbox" class="chk" data-valor="${saldo}"></td><td>${item.fecha}</td><td>${item.detalle}</td><td>${item.ton}</td><td>$${item.tar}</td><td>${item.descP}%</td><td>$${Math.round(neto)}</td><td>$${item.adelVal}</td><td>$${Math.round(saldo)}</td>`;
             cuerpo.appendChild(tr);
+        });
+        document.getElementById('indNeto').innerText = `$ ${Math.round(sNeto).toLocaleString()}`;
+        document.getElementById('indAdel').innerText = `$ ${Math.round(sAdel).toLocaleString()}`;
+        document.getElementById('indFinal').innerText = `$ ${Math.round(sFinal).toLocaleString()}`;
+        
+        document.querySelectorAll('.chk').forEach(c => c.onchange = () => {
+            let total = 0; document.querySelectorAll('.chk:checked').forEach(x => total += parseFloat(x.dataset.valor));
+            document.getElementById('liq-subtotal').innerText = `$ ${Math.round(total).toLocaleString()}`;
         });
     }
 
     function guardar() {
-        const item = {
-            id: Date.now(),
-            fecha: document.getElementById('f_fecha').value,
-            detalle: document.getElementById('f_detalle').value,
-            ton: parseFloat(document.getElementById('f_ton').value) || 0,
-            tar: parseFloat(document.getElementById('f_tar').value) || 0,
-            descP: parseFloat(document.getElementById('f_desc').value) || 0,
-            adelVal: parseFloat(document.getElementById('f_adel_val').value) || 0
-        };
+        const item = { id: Date.now(), fecha: document.getElementById('f_fecha').value, detalle: document.getElementById('f_detalle').value, ton: parseFloat(document.getElementById('f_ton').value)||0, tar: parseFloat(document.getElementById('f_tar').value)||0, descP: parseFloat(document.getElementById('f_desc').value)||0, adelVal: parseFloat(document.getElementById('f_adel_val').value)||0 };
         if(!db.camiones[tIdx].items) db.camiones[tIdx].items = [];
-        db.camiones[tIdx].items.push(item);
-        save();
-        document.getElementById('f_detalle').value = "";
-        document.getElementById('f_ton').value = "";
-        document.getElementById('f_tar').value = "";
-        document.getElementById('f_adel_val').value = "";
+        db.camiones[tIdx].items.push(item); dbRef.set(db);
+        ['f_detalle', 'f_ton', 'f_tar', 'f_adel_val'].forEach(id => document.getElementById(id).value = "");
         document.getElementById('f_detalle').focus();
     }
 
-    function eliminarFila(i) { if(confirm("¿Borrar?")) { db.camiones[tIdx].items.splice(i, 1); save(); } }
+    function nuevoCamion() { 
+        const n = prompt("Nombre:"); 
+        if(n) { if(!db.camiones) db.camiones = []; db.camiones.push({nombre:n.toUpperCase(), items:[]}); dbRef.set(db); } 
+    }
 
-    function nuevoCamion() {
-        const nom = prompt("Nombre Chofer:");
-        if (nom) {
-            if(!db.camiones) db.camiones = [];
-            db.camiones.push({ nombre: nom.toUpperCase(), items: [] });
-            save();
+    function eliminarChofer(e, i) { e.stopPropagation(); if(confirm("¿Borrar chofer?")) { db.camiones.splice(i, 1); tIdx = null; dbRef.set(db); } }
+
+    function eliminarDesdeCheck() {
+        if(confirm("¿Borrar seleccionados?")) {
+            const checks = document.querySelectorAll('.chk:checked');
+            checks.forEach(c => {
+                const fila = c.closest('tr');
+                const idx = Array.from(fila.parentNode.children).indexOf(fila);
+                db.camiones[tIdx].items.splice(idx, 1);
+            });
+            dbRef.set(db);
         }
     }
 
     function verResumenGlobal() {
         tIdx = null;
         document.getElementById('mainGestion').style.display = 'none';
+        document.getElementById('panelDerecho').style.display = 'none';
         document.getElementById('resumenSeccion').style.display = 'block';
     }
 
     function calcularFacturacion() {
-        let totalNetoReal = 0;
-        const desde = document.getElementById('resDesde').value;
-        const hasta = document.getElementById('resHasta').value;
-        
+        let netoTotal = 0;
+        const d = document.getElementById('resDesde').value, h = document.getElementById('resHasta').value;
         db.camiones.forEach(c => {
-            if(c.items) {
-                c.items.forEach(it => {
-                    if(it.fecha >= desde && it.fecha <= hasta) {
-                        const neto = (it.ton * it.tar) * (1 - (it.descP / 100));
-                        totalNetoReal += neto;
-                    }
-                });
-            }
+            if(c.items) c.items.forEach(it => {
+                if(it.fecha >= d && it.fecha <= h) netoTotal += (it.ton * it.tar) * (1 - (it.descP / 100));
+            });
         });
-
-        const iva = totalNetoReal * 0.21;
-        const totalConIva = totalNetoReal + iva;
-
+        const iva = netoTotal * 0.21;
         document.getElementById('resultadoFacturacion').innerHTML = `
-            <div class="resumen-box">
-                <h4>NETOS FACTURADOS (Con descuento)</h4>
-                <h2 style="color:var(--blue)">$ ${Math.round(totalNetoReal).toLocaleString()}</h2>
+            <div style="background:white; padding:15px; border-radius:10px; border-left:5px solid var(--blue)">
+                <label>NETOS FACTURADOS</label>
+                <h2>$ ${Math.round(netoTotal).toLocaleString()}</h2>
             </div>
-            <div class="resumen-box" style="border-left-color:var(--accent)">
-                <h4>IVA (21%) E IMPORTE TOTAL</h4>
+            <div style="background:white; padding:15px; border-radius:10px; border-left:5px solid var(--accent)">
+                <label>IVA (21%) + TOTAL</label>
                 <p>IVA: $ ${Math.round(iva).toLocaleString()}</p>
-                <h2 style="color:var(--accent)">TOTAL: $ ${Math.round(totalConIva).toLocaleString()}</h2>
-            </div>
-        `;
+                <h2>TOTAL: $ ${Math.round(netoTotal + iva).toLocaleString()}</h2>
+            </div>`;
+    }
+
+    function exportarPDF() {
+        const opt = { margin: 0.5, filename: 'liquidacion.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
+        html2pdf().set(opt).from(document.getElementById('mainGestion')).save();
     }
 </script>
 </body>
