@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Logística PRO - SIN IVA</title>
+    <title>Logística PRO - SIN IVA (Full)</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -10,29 +10,34 @@
         :root { --primary: #2c3e50; --accent: #27ae60; --blue: #2980b9; --orange: #e67e22; --red: #e74c3c; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        /* PANTALLA DE BLOQUEO */
         #lockscreen { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .login-card { background: white; padding: 40px; border-radius: 15px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
         .login-card input { display: block; width: 200px; padding: 12px; margin: 20px 0; font-size: 20px; border: 2px solid #ddd; border-radius: 8px; text-align: center; }
-        
-        /* DISEÑO ORIGINAL */
+
         .sidebar { width: 220px; background: var(--primary); color: white; padding: 20px; display: flex; flex-direction: column; flex-shrink: 0; }
         .search-box { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: none; font-size: 13px; box-sizing: border-box; }
-        .truck-item { padding: 10px; background: rgba(255,255,255,0.1); margin-bottom: 8px; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .truck-item { padding: 10px; background: rgba(255,255,255,0.1); margin-bottom: 8px; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
         .truck-item.active { background: var(--blue); font-weight: bold; }
+        
         .main-wrapper { display: flex; flex-grow: 1; overflow: hidden; }
         .main { flex-grow: 1; padding: 20px; overflow-y: auto; display: none; }
-        .right-panels { width: 280px; background: #fff; border-left: 2px solid #ddd; display: flex; flex-direction: column; overflow-y: auto; }
+        
+        .right-panels { width: 280px; background: #fff; border-left: 2px solid #ddd; display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; }
         .panel-section { padding: 20px; border-bottom: 1px solid #eee; }
+
         .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; border-top: 5px solid var(--primary); }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; }
-        label { font-size: 10px; font-weight: bold; color: #777; text-transform: uppercase; }
+        .field { display: flex; flex-direction: column; }
+        label { font-size: 10px; font-weight: bold; color: #777; margin-bottom: 4px; text-transform: uppercase; }
         input, select { padding: 7px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
         th { background: #f1f5f9; padding: 10px; border-bottom: 2px solid #cbd5e1; }
         td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; }
-        .btn { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; width: 100%; }
-        .sum-card { background: white; padding: 10px; border-radius: 8px; text-align: right; border-bottom: 4px solid var(--accent); flex: 1; }
+
+        .btn { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; width: 100%; margin-bottom: 5px; }
+        .sum-row { display: flex; gap: 10px; margin-top: 15px; }
+        .sum-card { background: white; padding: 12px; border-radius: 8px; flex: 1; text-align: right; border-bottom: 4px solid var(--accent); }
     </style>
 </head>
 <body>
@@ -55,31 +60,46 @@
 
     <div class="main-wrapper">
         <div class="main" id="mainGestion">
-            <h2 id="truckTitle"></h2>
-            <div class="card">
+            <h2 id="truckTitle" style="margin-top:0"></h2>
+            <div class="card" id="formCard">
                 <div class="form-grid">
                     <div class="field"><label>Fecha</label><input type="date" id="f_fecha" class="nav"></div>
+                    <div class="field"><label>N° Factura</label><input type="text" id="f_factura" class="nav"></div>
                     <div class="field"><label>Detalle</label><input type="text" id="f_detalle" class="nav"></div>
                     <div class="field"><label>TN</label><input type="number" id="f_ton" class="nav"></div>
                     <div class="field"><label>Tarifa</label><input type="number" id="f_tar" class="nav"></div>
                     <div class="field"><label>Desc %</label><input type="number" id="f_desc" value="0" class="nav"></div>
-                    <div class="field"><label>Gasto $</label><input type="number" id="f_adel_val" class="nav"></div>
+                    <div class="field"><label>Tipo</label>
+                        <select id="f_tipo" class="nav" onchange="toggleGasoil()">
+                            <option value="Pago">Pago</option>
+                            <option value="Adelanto">Adelanto</option>
+                            <option value="Gasoil">Gasoil</option>
+                        </select>
+                    </div>
+                    <div class="field" id="div_litros" style="display:none"><label>Litros</label><input type="number" id="f_litros" class="nav"></div>
+                    <div class="field"><label>Monto $</label><input type="number" id="f_monto" class="nav"></div>
                 </div>
-                <button class="btn" style="background:var(--accent); margin-top:10px; width:auto" onclick="guardar()">Cargar Registro</button>
+                <div style="display:flex; gap:10px; margin-top:15px;">
+                    <button id="btnGuardar" class="btn" style="background:var(--accent); width:auto" onclick="guardar()">Cargar Registro</button>
+                    <button id="btnConfirmarEdit" class="btn" style="background:var(--orange); width:auto; display:none" onclick="confirmarEdicion()">Confirmar Cambio</button>
+                    <button id="btnCancelarEdit" class="btn" style="background:#888; width:auto; display:none" onclick="cancelarEdicion()">Cancelar</button>
+                </div>
             </div>
+
             <table>
-                <thead><tr><th>Sel.</th><th>Fecha</th><th>Detalle</th><th>TN</th><th>Tarifa</th><th>Desc.</th><th>Neto</th><th>Gasto</th><th>Saldo</th></tr></thead>
+                <thead><tr><th>Sel.</th><th>Fecha</th><th>Factura</th><th>Detalle</th><th>TN</th><th>Tarifa</th><th>Desc.</th><th>Neto</th><th>Gasto</th><th>Saldo</th></tr></thead>
                 <tbody id="tablaCuerpo"></tbody>
             </table>
-            <div style="display:flex; gap:10px; margin-top:15px;">
-                <div class="sum-card">NETO: <strong id="indNeto">$ 0</strong></div>
-                <div class="sum-card" style="border-color:var(--orange)">GASTOS: <strong id="indAdel">$ 0</strong></div>
-                <div class="sum-card">SALDO: <strong id="indFinal">$ 0</strong></div>
+
+            <div class="sum-row">
+                <div class="sum-card">NETO TOTAL <br><strong id="indNeto">$ 0</strong></div>
+                <div class="sum-card" style="border-color:var(--orange)">ADELANTOS <br><strong id="indAdel">$ 0</strong></div>
+                <div class="sum-card">SALDO A PAGAR <br><strong id="indFinal">$ 0</strong></div>
             </div>
         </div>
 
         <div class="main" id="resumenSeccion">
-            <h2>Resumen de Facturación</h2>
+            <h2>Reporte Mensual (SIN IVA)</h2>
             <div class="card" style="display:flex; gap:10px; align-items:flex-end">
                 <input type="date" id="resDesde"> <input type="date" id="resHasta">
                 <button class="btn" style="background:var(--blue); width:auto" onclick="calcularFacturacion()">Calcular</button>
@@ -92,12 +112,14 @@
                 <h3>💰 Liquidación</h3>
                 <div style="background:#f9f9f9; padding:10px; border-radius:8px">
                     <label>Suma Seleccionada:</label>
-                    <div id="liq-subtotal" style="font-size:20px; font-weight:bold">$ 0</div>
+                    <div id="liq-subtotal" style="font-size:22px; font-weight:bold; color:var(--accent)">$ 0</div>
                 </div>
                 <button class="btn" style="background:var(--blue); margin-top:10px" onclick="exportarPDF()">Exportar PDF</button>
             </div>
             <div class="panel-section">
-                <button class="btn" style="background:var(--red)" onclick="eliminarDesdeCheck()">✕ Borrar Seleccionados</button>
+                <h3>⚙️ Acciones</h3>
+                <button id="btnEdit" class="btn" style="background:var(--orange); opacity:0.5" disabled onclick="prepararEdicion()">✎ Editar Registro</button>
+                <button id="btnDel" class="btn" style="background:var(--red); opacity:0.5" disabled onclick="eliminarSeleccionados()">✕ Borrar Selección</button>
             </div>
         </div>
     </div>
@@ -114,17 +136,18 @@
     };
     firebase.initializeApp(firebaseConfig);
     const dbRef = firebase.database().ref('viajes_SIN_IVA');
-    let db = { camiones: [] }; let tIdx = null;
+    let db = { camiones: [] }; let tIdx = null; let editId = null;
 
     function verificar() {
-        if(document.getElementById('passInput').value === "1234") {
-            document.getElementById('lockscreen').style.display = 'none';
-        } else { alert("Clave Incorrecta"); }
+        if(document.getElementById('passInput').value === "1234") document.getElementById('lockscreen').style.display = 'none';
+        else alert("Clave Incorrecta");
     }
+
+    function toggleGasoil() { document.getElementById('div_litros').style.display = document.getElementById('f_tipo').value === 'Gasoil' ? 'flex' : 'none'; }
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && e.target.classList.contains('nav')) {
-            const inputs = Array.from(document.querySelectorAll('.nav'));
+            const inputs = Array.from(document.querySelectorAll('.nav')).filter(i => i.offsetParent !== null);
             const idx = inputs.indexOf(e.target);
             if (idx < inputs.length - 1) inputs[idx + 1].focus();
             else guardar();
@@ -139,11 +162,9 @@
         if(!db.camiones) return;
         db.camiones.forEach((c, i) => {
             if (c.nombre.toLowerCase().includes(filtro)) {
-                const d = document.createElement('div');
-                d.className = `truck-item ${tIdx === i ? 'active' : ''}`;
+                const d = document.createElement('div'); d.className = `truck-item ${tIdx === i ? 'active' : ''}`;
                 d.innerHTML = `<span>${c.nombre}</span><button onclick="eliminarChofer(event, ${i})" style="background:none; border:none; color:white">✕</button>`;
-                d.onclick = () => { tIdx = i; abrirChofer(); };
-                div.appendChild(d);
+                d.onclick = () => { tIdx = i; abrirChofer(); }; div.appendChild(d);
             }
         });
     }
@@ -165,76 +186,110 @@
             const saldo = neto - item.adelVal;
             sNeto += neto; sAdel += item.adelVal; sFinal += saldo;
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td><input type="checkbox" class="chk" data-valor="${saldo}"></td><td>${item.fecha}</td><td>${item.detalle}</td><td>${item.ton}</td><td>$${item.tar}</td><td>${item.descP}%</td><td>$${Math.round(neto)}</td><td>$${item.adelVal}</td><td>$${Math.round(saldo)}</td>`;
+            tr.innerHTML = `<td><input type="checkbox" class="chk" data-id="${item.id}" data-valor="${saldo}"></td><td>${item.fecha}</td><td>${item.factura || '-'}</td><td>${item.detalle}</td><td>${item.ton}</td><td>$${item.tar}</td><td>${item.descP}%</td><td>$${Math.round(neto)}</td><td>$${item.adelVal}</td><td>$${Math.round(saldo)}</td>`;
             cuerpo.appendChild(tr);
         });
         document.getElementById('indNeto').innerText = `$ ${Math.round(sNeto).toLocaleString()}`;
         document.getElementById('indAdel').innerText = `$ ${Math.round(sAdel).toLocaleString()}`;
         document.getElementById('indFinal').innerText = `$ ${Math.round(sFinal).toLocaleString()}`;
-        
-        document.querySelectorAll('.chk').forEach(c => c.onchange = () => {
-            let total = 0; document.querySelectorAll('.chk:checked').forEach(x => total += parseFloat(x.dataset.valor));
-            document.getElementById('liq-subtotal').innerText = `$ ${Math.round(total).toLocaleString()}`;
-        });
+        actualizarBotones();
     }
+
+    function actualizarBotones() {
+        const seleccionados = document.querySelectorAll('.chk:checked');
+        const btnEdit = document.getElementById('btnEdit');
+        const btnDel = document.getElementById('btnDel');
+        
+        btnEdit.disabled = seleccionados.length !== 1;
+        btnEdit.style.opacity = btnEdit.disabled ? "0.5" : "1";
+        btnDel.disabled = seleccionados.length === 0;
+        btnDel.style.opacity = btnDel.disabled ? "0.5" : "1";
+
+        let total = 0; seleccionados.forEach(x => total += parseFloat(x.dataset.valor));
+        document.getElementById('liq-subtotal').innerText = `$ ${Math.round(total).toLocaleString()}`;
+    }
+
+    document.addEventListener('change', (e) => { if(e.target.classList.contains('chk')) actualizarBotones(); });
 
     function guardar() {
-        const item = { id: Date.now(), fecha: document.getElementById('f_fecha').value, detalle: document.getElementById('f_detalle').value, ton: parseFloat(document.getElementById('f_ton').value)||0, tar: parseFloat(document.getElementById('f_tar').value)||0, descP: parseFloat(document.getElementById('f_desc').value)||0, adelVal: parseFloat(document.getElementById('f_adel_val').value)||0 };
+        const item = { id: Date.now(), fecha: document.getElementById('f_fecha').value, factura: document.getElementById('f_factura').value, detalle: document.getElementById('f_detalle').value, ton: parseFloat(document.getElementById('f_ton').value)||0, tar: parseFloat(document.getElementById('f_tar').value)||0, descP: parseFloat(document.getElementById('f_desc').value)||0, adelVal: parseFloat(document.getElementById('f_monto').value)||0, tipo: document.getElementById('f_tipo').value, litros: document.getElementById('f_litros').value };
         if(!db.camiones[tIdx].items) db.camiones[tIdx].items = [];
         db.camiones[tIdx].items.push(item); dbRef.set(db);
-        ['f_detalle', 'f_ton', 'f_tar', 'f_adel_val'].forEach(id => document.getElementById(id).value = "");
-        document.getElementById('f_detalle').focus();
+        limpiarForm();
     }
 
-    function nuevoCamion() { 
-        const n = prompt("Nombre:"); 
-        if(n) { if(!db.camiones) db.camiones = []; db.camiones.push({nombre:n.toUpperCase(), items:[]}); dbRef.set(db); } 
+    function prepararEdicion() {
+        const id = parseInt(document.querySelector('.chk:checked').dataset.id);
+        const item = db.camiones[tIdx].items.find(x => x.id === id);
+        editId = id;
+        document.getElementById('f_fecha').value = item.fecha;
+        document.getElementById('f_factura').value = item.factura || "";
+        document.getElementById('f_detalle').value = item.detalle;
+        document.getElementById('f_ton').value = item.ton;
+        document.getElementById('f_tar').value = item.tar;
+        document.getElementById('f_desc').value = item.descP;
+        document.getElementById('f_tipo').value = item.tipo || "Pago";
+        document.getElementById('f_monto').value = item.adelVal;
+        toggleGasoil();
+        if(item.tipo === 'Gasoil') document.getElementById('f_litros').value = item.litros || "";
+        
+        document.getElementById('btnGuardar').style.display = 'none';
+        document.getElementById('btnConfirmarEdit').style.display = 'inline-block';
+        document.getElementById('btnCancelarEdit').style.display = 'inline-block';
+        document.getElementById('formCard').style.borderTopColor = 'var(--orange)';
     }
 
-    function eliminarChofer(e, i) { e.stopPropagation(); if(confirm("¿Borrar chofer?")) { db.camiones.splice(i, 1); tIdx = null; dbRef.set(db); } }
+    function confirmarEdicion() {
+        const idx = db.camiones[tIdx].items.findIndex(x => x.id === editId);
+        db.camiones[tIdx].items[idx] = { id: editId, fecha: document.getElementById('f_fecha').value, factura: document.getElementById('f_factura').value, detalle: document.getElementById('f_detalle').value, ton: parseFloat(document.getElementById('f_ton').value)||0, tar: parseFloat(document.getElementById('f_tar').value)||0, descP: parseFloat(document.getElementById('f_desc').value)||0, adelVal: parseFloat(document.getElementById('f_monto').value)||0, tipo: document.getElementById('f_tipo').value, litros: document.getElementById('f_litros').value };
+        dbRef.set(db); cancelarEdicion();
+    }
 
-    function eliminarDesdeCheck() {
+    function cancelarEdicion() {
+        editId = null; limpiarForm();
+        document.getElementById('btnGuardar').style.display = 'inline-block';
+        document.getElementById('btnConfirmarEdit').style.display = 'none';
+        document.getElementById('btnCancelarEdit').style.display = 'none';
+        document.getElementById('formCard').style.borderTopColor = 'var(--primary)';
+    }
+
+    function limpiarForm() {
+        ['f_factura', 'f_detalle', 'f_ton', 'f_tar', 'f_monto', 'f_litros'].forEach(id => document.getElementById(id).value = "");
+        document.getElementById('f_desc').value = 0; document.getElementById('f_tipo').value = "Pago"; toggleGasoil();
+    }
+
+    function eliminarSeleccionados() {
         if(confirm("¿Borrar seleccionados?")) {
             const checks = document.querySelectorAll('.chk:checked');
-            checks.forEach(c => {
-                const fila = c.closest('tr');
-                const idx = Array.from(fila.parentNode.children).indexOf(fila);
-                db.camiones[tIdx].items.splice(idx, 1);
-            });
+            const idsABorrar = Array.from(checks).map(c => parseInt(c.dataset.id));
+            db.camiones[tIdx].items = db.camiones[tIdx].items.filter(it => !idsABorrar.includes(it.id));
             dbRef.set(db);
         }
     }
 
-    function verResumenGlobal() {
-        tIdx = null;
-        document.getElementById('mainGestion').style.display = 'none';
-        document.getElementById('panelDerecho').style.display = 'none';
-        document.getElementById('resumenSeccion').style.display = 'block';
+    function nuevoCamion() { 
+        const n = prompt("Nombre:"); if(n) { if(!db.camiones) db.camiones = []; db.camiones.push({nombre:n.toUpperCase(), items:[]}); dbRef.set(db); } 
     }
 
+    function eliminarChofer(e, i) { e.stopPropagation(); if(confirm("¿Borrar chofer?")) { db.camiones.splice(i, 1); tIdx = null; dbRef.set(db); } }
+
+    function verResumenGlobal() { tIdx = null; document.getElementById('mainGestion').style.display = 'none'; document.getElementById('panelDerecho').style.display = 'none'; document.getElementById('resumenSeccion').style.display = 'block'; }
+
     function calcularFacturacion() {
-        let netoTotal = 0;
-        const d = document.getElementById('resDesde').value, h = document.getElementById('resHasta').value;
-        db.camiones.forEach(c => {
-            if(c.items) c.items.forEach(it => {
-                if(it.fecha >= d && it.fecha <= h) netoTotal += (it.ton * it.tar) * (1 - (it.descP / 100));
-            });
-        });
+        let netoTotal = 0; const d = document.getElementById('resDesde').value, h = document.getElementById('resHasta').value;
+        db.camiones.forEach(c => { if(c.items) c.items.forEach(it => { if(it.fecha >= d && it.fecha <= h) netoTotal += (it.ton * it.tar) * (1 - (it.descP / 100)); }); });
         const iva = netoTotal * 0.21;
         document.getElementById('resultadoFacturacion').innerHTML = `
             <div style="background:white; padding:15px; border-radius:10px; border-left:5px solid var(--blue)">
-                <label>NETOS FACTURADOS</label>
-                <h2>$ ${Math.round(netoTotal).toLocaleString()}</h2>
+                <label>NETOS FACTURADOS</label><h2>$ ${Math.round(netoTotal).toLocaleString()}</h2>
             </div>
             <div style="background:white; padding:15px; border-radius:10px; border-left:5px solid var(--accent)">
-                <label>IVA (21%) + TOTAL</label>
-                <p>IVA: $ ${Math.round(iva).toLocaleString()}</p>
-                <h2>TOTAL: $ ${Math.round(netoTotal + iva).toLocaleString()}</h2>
+                <label>IVA (21%) + TOTAL</label><p>IVA: $ ${Math.round(iva).toLocaleString()}</p><h2>TOTAL: $ ${Math.round(netoTotal + iva).toLocaleString()}</h2>
             </div>`;
     }
 
     function exportarPDF() {
-        const opt = { margin: 0.5, filename: 'liquidacion.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
+        const opt = { margin: 0.5, filename: 'liquidacion.pdf', html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
         html2pdf().set(opt).from(document.getElementById('mainGestion')).save();
     }
 </script>
