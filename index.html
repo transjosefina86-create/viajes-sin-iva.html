@@ -46,14 +46,15 @@
         .pendiente { background: var(--red); }
         .pagado { background: var(--accent); }
         
-        .badge-adelanto { background: #fdf2f2; color: #9b1c1c; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid #f8b4b4; }
-        .badge-pago { background: #ebf5fb; color: #1a5276; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid #aed6f1; }
-        .badge-gasoil { background: #eafaf1; color: #186a3b; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid #abebc6; }
-        
         .btn { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; width: 100%; transition: 0.3s; }
-        .right-panels { width: 280px; background: #fff; border-left: 2px solid #ddd; display: flex; flex-direction: column; }
+        .right-panels { width: 300px; background: #fff; border-left: 2px solid #ddd; display: flex; flex-direction: column; }
         .panel-section { padding: 20px; border-bottom: 1px solid #eee; }
         .liq-box { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0; }
+
+        /* Estilos específicos para el PDF */
+        #pdf-content { padding: 20px; background: white; }
+        .pdf-header { text-align: center; border-bottom: 2px solid #2c3e50; margin-bottom: 20px; padding-bottom: 10px; }
+        .pdf-resumen { display: flex; justify-content: space-around; margin-top: 20px; background: #f1f5f9; padding: 15px; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -77,6 +78,7 @@
     <div class="main-wrapper">
         <div class="main" id="mainGestion">
             <h2 id="truckTitle" style="margin-top:0;"></h2>
+            
             <div class="card" id="formCard">
                 <div class="form-grid">
                     <div class="field"><label>Fecha</label><input type="date" id="f_fecha" class="nav"></div>
@@ -103,12 +105,14 @@
                 </div>
             </div>
 
-            <table>
-                <thead>
-                    <tr><th>Sel.</th><th>Estado</th><th>Fecha</th><th>Factura</th><th>Detalle</th><th>TN</th><th>Tarifa</th><th>Desc.</th><th>Neto</th><th>Gasto</th><th>Saldo</th></tr>
-                </thead>
-                <tbody id="tablaCuerpo"></tbody>
-            </table>
+            <div id="exportArea">
+                <table id="tablaViajes">
+                    <thead>
+                        <tr><th>Sel.</th><th>Estado</th><th>Fecha</th><th>Factura</th><th>Detalle</th><th>TN</th><th>Tarifa</th><th>Desc.</th><th>Neto</th><th>Gasto</th><th>Saldo</th></tr>
+                    </thead>
+                    <tbody id="tablaCuerpo"></tbody>
+                </table>
+            </div>
         </div>
 
         <div class="main" id="resumenSeccion">
@@ -123,12 +127,12 @@
 
         <div class="right-panels" id="panelDerecho" style="display:none">
             <div class="panel-section">
-                <h3>💰 Selección</h3>
-                <div class="liq-box"><label>Viajes (+):</label><div id="sum-viajes" style="color:var(--accent); font-weight:bold;">$ 0</div></div>
-                <div class="liq-box"><label>Gastos (-):</label><div id="sum-gastos" style="color:var(--red); font-weight:bold;">$ 0</div></div>
-                <div class="liq-box" style="border-left:5px solid var(--blue)"><label>SALDO:</label><div id="liq-subtotal" style="font-size:24px; font-weight:bold;">$ 0</div></div>
+                <h3>💰 Liquidación</h3>
+                <div class="liq-box"><label>Viajes (+):</label><div id="sum-viajes" style="color:var(--accent); font-weight:bold; font-size:1.2em;">$ 0</div></div>
+                <div class="liq-box"><label>Gastos (-):</label><div id="sum-gastos" style="color:var(--red); font-weight:bold; font-size:1.2em;">$ 0</div></div>
+                <div class="liq-box" style="border-left:5px solid var(--blue); background:#f0f9ff"><label>SALDO FINAL:</label><div id="liq-subtotal" style="font-size:22px; font-weight:bold; color:#1e3a8a;">$ 0</div></div>
                 <button class="btn" style="background:var(--accent); margin-top:10px" onclick="marcarComoPagados()">✔ Marcar Pagados</button>
-                <button class="btn" style="background:var(--blue)" onclick="exportarPDF()">⬇ PDF</button>
+                <button class="btn" style="background:var(--blue)" onclick="exportarPDF()">⬇ Descargar PDF Chofer</button>
             </div>
             <div class="panel-section">
                 <h3>⚙️ Acciones</h3>
@@ -156,6 +160,7 @@
     function verificar() { if(document.getElementById('passInput').value === "1234") document.getElementById('lockscreen').style.display = 'none'; else alert("Clave Incorrecta"); }
     function toggleGasoil() { document.getElementById('div_litros').style.display = document.getElementById('f_tipo').value === 'Gasoil' ? 'flex' : 'none'; }
 
+    // NAVEGACIÓN ENTER
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && e.target.classList.contains('nav')) {
             const inputs = Array.from(document.querySelectorAll('.nav')).filter(i => i.offsetParent !== null);
@@ -190,9 +195,9 @@
             const gasto = item.adelVal || 0;
             const saldo = neto - gasto;
             let fD = item.factura || '-'; let dD = item.detalle || '';
-            if(item.tipo==='Adelanto') fD=`<span class="badge-adelanto">ADELANTO</span> ${item.factura||''}`;
-            if(item.tipo==='Pago') fD=`<span class="badge-pago">PAGO</span> ${item.factura||''}`;
-            if(item.tipo==='Gasoil') { fD=`<span class="badge-gasoil">GASOIL</span>`; dD=`<strong>${item.litros||0} Lts</strong> - ${item.detalle||''}`; }
+            if(item.tipo==='Adelanto') fD=`<span style="color:#b91c1c; font-weight:bold;">ADELANTO</span> ${item.factura||''}`;
+            if(item.tipo==='Pago') fD=`<span style="color:#1d4ed8; font-weight:bold;">PAGO</span> ${item.factura||''}`;
+            if(item.tipo==='Gasoil') { fD=`<span style="color:#047857; font-weight:bold;">GASOIL</span>`; dD=`<strong>${item.litros||0} Lts</strong> - ${item.detalle||''}`; }
 
             const tr = document.createElement('tr');
             tr.innerHTML = `<td><input type="checkbox" class="chk" data-id="${item.id}" data-neto="${neto}" data-gasto="${gasto}"></td>
@@ -240,25 +245,6 @@
     function eliminarChofer(e, i) { e.stopPropagation(); if(confirm("¿Borrar chofer?")) { db.camiones.splice(i, 1); tIdx = null; dbRef.set(db); } }
     function verResumenGlobal() { tIdx = null; document.getElementById('mainGestion').style.display = 'none'; document.getElementById('panelDerecho').style.display = 'none'; document.getElementById('resumenSeccion').style.display = 'block'; }
 
-    function calcularFacturacion() {
-        let nC = 0, nS = 0; const d = document.getElementById('resDesde').value, h = document.getElementById('resHasta').value;
-        db.camiones.forEach(c => { if(c.items) c.items.forEach(it => { if(it.fecha >= d && it.fecha <= h) { nC += (it.ton * it.tar) * (1 - ((it.descP || 0) / 100)); nS += (it.ton * it.tar); }}); });
-        const iC = nC * 0.21, iS = nS * 0.21;
-        document.getElementById('resultadoFacturacion').innerHTML = `
-            <div style="background:white; padding:25px; border-radius:10px; border-left:6px solid var(--blue)">
-                <h3 style="margin:0">CON DESCUENTO</h3>
-                <p>Neto: $ ${Math.round(nC).toLocaleString()}</p>
-                <p>IVA (21%): $ ${Math.round(iC).toLocaleString()}</p>
-                <hr><h2>TOTAL: $ ${Math.round(nC + iC).toLocaleString()}</h2>
-            </div>
-            <div style="background:white; padding:25px; border-radius:10px; border-left:6px solid var(--orange)">
-                <h3 style="margin:0">SIN DESCUENTO</h3>
-                <p>Neto: $ ${Math.round(nS).toLocaleString()}</p>
-                <p>IVA (21%): $ ${Math.round(iS).toLocaleString()}</p>
-                <hr><h2>TOTAL: $ ${Math.round(nS + iS).toLocaleString()}</h2>
-            </div>`;
-    }
-
     function actualizarTotales() {
         const seleccionados = document.querySelectorAll('.chk:checked');
         let vT = 0, gT = 0; seleccionados.forEach(x => { vT += parseFloat(x.dataset.neto); gT += parseFloat(x.dataset.gasto); });
@@ -273,8 +259,63 @@
     document.addEventListener('change', (e) => { if(e.target.classList.contains('chk')) actualizarTotales(); });
     function cambiarEstado(id) { const it = db.camiones[tIdx].items.find(x => x.id === id); it.estado = it.estado === 'pagado' ? 'pendiente' : 'pagado'; dbRef.set(db); }
     function marcarComoPagados() { const ids = Array.from(document.querySelectorAll('.chk:checked')).map(c => parseInt(c.dataset.id)); db.camiones[tIdx].items.forEach(it => { if(ids.includes(it.id)) it.estado = 'pagado'; }); dbRef.set(db); }
-    function exportarPDF() { html2pdf().set({margin:0.5, filename:'liquidacion.pdf', html2canvas:{scale:2}}).from(document.getElementById('mainGestion')).save(); }
     function nuevoCamion() { const n = prompt("Nombre:"); if(n) { if(!db.camiones) db.camiones = []; db.camiones.push({nombre:n.toUpperCase(), items:[]}); dbRef.set(db); } }
+
+    // --- FUNCIÓN DE EXPORTACIÓN MEJORADA PARA PDF ---
+    function exportarPDF() {
+        const chofer = db.camiones[tIdx].nombre;
+        const viajes = document.getElementById('sum-viajes').innerText;
+        const gastos = document.getElementById('sum-gastos').innerText;
+        const saldo = document.getElementById('liq-subtotal').innerText;
+        
+        // Creamos un contenedor temporal invisible para el PDF
+        const element = document.createElement('div');
+        element.style.padding = "20px";
+        element.style.fontFamily = "Arial, sans-serif";
+        
+        // Clonamos la tabla pero quitamos la primera columna (Sel.) y la segunda (Estado) si querés
+        const tablaClonada = document.getElementById('tablaViajes').cloneNode(true);
+        const filas = tablaClonada.querySelectorAll('tr');
+        filas.forEach(fila => {
+            fila.deleteCell(0); // Borra columna "Sel."
+            fila.deleteCell(0); // Borra columna "Estado"
+        });
+
+        element.innerHTML = `
+            <div style="text-align:center; border-bottom: 2px solid #2c3e50; margin-bottom: 20px; padding-bottom: 10px;">
+                <h1 style="margin:0; color:#2c3e50;">Liquidación de Transporte</h1>
+                <h2 style="margin:5px 0; color:#555;">Chofer: ${chofer}</h2>
+                <p>Fecha de emisión: ${new Date().toLocaleDateString()}</p>
+            </div>
+            
+            ${tablaClonada.outerHTML}
+            
+            <div style="margin-top:30px; border-top: 2px solid #eee; padding-top: 20px;">
+                <div style="display: flex; justify-content: flex-end;">
+                    <div style="width: 300px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <p style="display:flex; justify-content:space-between; margin:5px 0;"><strong>Total Viajes:</strong> <span>${viajes}</span></p>
+                        <p style="display:flex; justify-content:space-between; margin:5px 0; color:#b91c1c;"><strong>Total Gastos:</strong> <span>${gastos}</span></p>
+                        <hr>
+                        <p style="display:flex; justify-content:space-between; margin:5px 0; font-size:1.4em; color:#1e3a8a;"><strong>SALDO FINAL:</strong> <span>${saldo}</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top:50px; text-align:center; font-size:10px; color:#999;">
+                Documento generado por Sistema PRO Logística
+            </div>
+        `;
+
+        const opt = {
+            margin:       10,
+            filename:     `Liquidacion_${chofer}_${new Date().toLocaleDateString()}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, logging: false },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        };
+
+        html2pdf().set(opt).from(element).save();
+    }
 </script>
 </body>
 </html>
