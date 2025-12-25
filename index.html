@@ -2,35 +2,67 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Logística PRO - SIN IVA (Control de Pagos)</title>
+    <title>Logística PRO - SIN IVA (Flexible)</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #27ae60; --blue: #2980b9; --orange: #e67e22; --red: #e74c3c; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Bloqueo */
         #lockscreen { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .login-card { background: white; padding: 40px; border-radius: 15px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        
+        /* Sidebar */
         .sidebar { width: 220px; background: var(--primary); color: white; padding: 20px; display: flex; flex-direction: column; flex-shrink: 0; }
         .search-box { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: none; }
         .truck-item { padding: 10px; background: rgba(255,255,255,0.1); margin-bottom: 8px; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
         .truck-item.active { background: var(--blue); font-weight: bold; }
+        
+        /* Contenedor Principal */
         .main-wrapper { display: flex; flex-grow: 1; overflow: hidden; }
         .main { flex-grow: 1; padding: 20px; overflow-y: auto; display: none; }
+        
+        /* FORMULARIO FLEXIBLE (Mejorado) */
+        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; border-top: 5px solid var(--primary); }
+        .form-grid { 
+            display: flex; 
+            flex-wrap: wrap; /* Esto permite que si no entran, pasen abajo */
+            gap: 12px; 
+            align-items: flex-end;
+        }
+        .field { 
+            display: flex; 
+            flex-direction: column; 
+            flex-grow: 1; /* Esto hace que se estiren para ocupar el espacio */
+            min-width: 120px; 
+        }
+        .field-detalle { flex-grow: 3; min-width: 250px; } /* Detalle más ancho */
+        
+        label { font-size: 11px; font-weight: bold; color: #555; margin-bottom: 5px; text-transform: uppercase; }
+        input, select { 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 6px; 
+            font-size: 14px; 
+            width: 100%; 
+            box-sizing: border-box;
+            background: #fff;
+        }
+        input:focus { border-color: var(--blue); outline: none; box-shadow: 0 0 5px rgba(41,128,185,0.3); }
+
+        /* Tabla y Paneles */
         .right-panels { width: 280px; background: #fff; border-left: 2px solid #ddd; display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; }
         .panel-section { padding: 15px; border-bottom: 1px solid #eee; }
-        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; border-top: 5px solid var(--primary); }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; }
-        label { font-size: 10px; font-weight: bold; color: #777; margin-bottom: 4px; text-transform: uppercase; }
-        input, select { padding: 7px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
-        th { background: #f1f5f9; padding: 10px; border-bottom: 2px solid #cbd5e1; text-align: center; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; background: white; }
+        th { background: #f1f5f9; padding: 12px; border-bottom: 2px solid #cbd5e1; text-align: center; }
         td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; }
-        .btn { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; width: 100%; margin-bottom: 5px; }
-        .status-pill { padding: 4px 8px; border-radius: 4px; font-size: 9px; font-weight: bold; border: none; color: white; cursor: pointer; text-transform: uppercase; }
+        .status-pill { padding: 5px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; border: none; color: white; cursor: pointer; text-transform: uppercase; }
         .pendiente { background: var(--red); }
         .pagado { background: var(--accent); }
-        .liq-box { background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e2e8f0; }
+        .btn { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; width: 100%; margin-bottom: 8px; }
+        .liq-box { background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #e2e8f0; }
     </style>
 </head>
 <body>
@@ -38,75 +70,96 @@
     <div id="lockscreen">
         <div class="login-card">
             <h2 style="color:#333">ACCESO PRIVADO</h2>
-            <input type="password" id="passInput" placeholder="Clave" onkeydown="if(event.key==='Enter') verificar()">
-            <button class="btn" style="background:var(--blue)" onclick="verificar()">ENTRAR</button>
+            <input type="password" id="passInput" style="width:200px; margin: 20px auto; display:block;" placeholder="Clave" onkeydown="if(event.key==='Enter') verificar()">
+            <button class="btn" style="background:var(--blue); width:200px;" onclick="verificar()">ENTRAR</button>
         </div>
     </div>
 
     <div class="sidebar">
-        <h3>VIAJES SIN IVA</h3>
+        <h3 style="text-align:center; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:10px;">LOGÍSTICA PRO</h3>
         <input type="text" id="buscador" class="search-box" placeholder="Buscar chofer..." oninput="renderSidebar()">
         <div id="truckList" style="flex-grow:1; overflow-y:auto"></div>
         <button onclick="nuevoCamion()" class="btn" style="background:var(--accent); margin-top:10px;">+ Nuevo Chofer</button>
-        <button onclick="verResumenGlobal()" class="btn" style="background:var(--orange); margin-top:5px;">📂 Resumen Gral</button>
+        <button onclick="verResumenGlobal()" class="btn" style="background:var(--orange); margin-top:5px;">📂 Resumen Facturación</button>
     </div>
 
     <div class="main-wrapper">
         <div class="main" id="mainGestion">
-            <h2 id="truckTitle" style="margin-top:0"></h2>
+            <h2 id="truckTitle" style="margin-top:0; color: var(--primary);"></h2>
             <div class="card" id="formCard">
                 <div class="form-grid">
                     <div class="field"><label>Fecha</label><input type="date" id="f_fecha" class="nav"></div>
-                    <div class="field"><label>Factura / Remito</label><input type="text" id="f_factura" class="nav" placeholder="N°"></div>
-                    <div class="field"><label>Detalle</label><input type="text" id="f_detalle" class="nav"></div>
-                    <div class="field"><label>TN</label><input type="number" id="f_ton" class="nav" placeholder="0"></div>
+                    <div class="field"><label>Factura/Remito</label><input type="text" id="f_factura" class="nav" placeholder="N°"></div>
+                    <div class="field-detalle"><label>Detalle del Viaje</label><input type="text" id="f_detalle" class="nav" placeholder="Origen - Destino - Observaciones"></div>
+                    <div class="field"><label>Toneladas</label><input type="number" id="f_ton" class="nav" placeholder="0.00" step="0.01"></div>
                     <div class="field"><label>Tarifa</label><input type="number" id="f_tar" class="nav" placeholder="$"></div>
-                    <div class="field"><label>Desc %</label><input type="number" id="f_desc" class="nav" placeholder="%"></div>
-                    <div class="field"><label>Tipo</label><select id="f_tipo" class="nav" onchange="toggleGasoil()"><option value="Viaje">Viaje</option><option value="Adelanto">Adelanto</option><option value="Gasoil">Gasoil</option></select></div>
+                    <div class="field"><label>Descuento %</label><input type="number" id="f_desc" class="nav" placeholder="%"></div>
+                    <div class="field"><label>Tipo Registro</label>
+                        <select id="f_tipo" class="nav" onchange="toggleGasoil()">
+                            <option value="Viaje">Viaje</option>
+                            <option value="Adelanto">Adelanto</option>
+                            <option value="Gasoil">Gasoil</option>
+                        </select>
+                    </div>
                     <div class="field" id="div_litros" style="display:none"><label>Litros</label><input type="number" id="f_litros" class="nav"></div>
-                    <div class="field"><label>Monto $</label><input type="number" id="f_monto" class="nav" placeholder="$"></div>
+                    <div class="field"><label>Monto Final $</label><input type="number" id="f_monto" class="nav" placeholder="$"></div>
                 </div>
-                <div style="display:flex; gap:10px; margin-top:15px;">
-                    <button id="btnGuardar" class="btn" style="background:var(--accent); width:auto" onclick="guardar()">Cargar Registro</button>
-                    <button id="btnConfirmarEdit" class="btn" style="background:var(--orange); width:auto; display:none" onclick="confirmarEdicion()">Confirmar Edición</button>
-                    <button id="btnCancelarEdit" class="btn" style="background:#888; width:auto; display:none" onclick="cancelarEdicion()">Cancelar</button>
+                <div style="display:flex; gap:10px; margin-top:20px; justify-content: flex-end;">
+                    <button id="btnGuardar" class="btn" style="background:var(--accent); width:200px" onclick="guardar()">Cargar Registro</button>
+                    <button id="btnConfirmarEdit" class="btn" style="background:var(--orange); width:200px; display:none" onclick="confirmarEdicion()">Guardar Cambios</button>
+                    <button id="btnCancelarEdit" class="btn" style="background:#888; width:120px; display:none" onclick="cancelarEdicion()">Cancelar</button>
                 </div>
             </div>
 
             <table>
-                <thead><tr><th>Sel.</th><th>Estado</th><th>Fecha</th><th>Factura</th><th>Detalle</th><th>TN</th><th>Tarifa</th><th>Desc.</th><th>Neto</th><th>Gasto</th><th>Saldo</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Sel.</th>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                        <th>Factura</th>
+                        <th>Detalle</th>
+                        <th>TN</th>
+                        <th>Tarifa</th>
+                        <th>Desc.</th>
+                        <th>Neto</th>
+                        <th>Gasto</th>
+                        <th>Saldo</th>
+                    </tr>
+                </thead>
                 <tbody id="tablaCuerpo"></tbody>
             </table>
         </div>
 
         <div class="main" id="resumenSeccion">
-            <h2>Reporte de Facturación Mensual</h2>
+            <h2>Reporte de Facturación</h2>
             <div class="card" style="display:flex; gap:10px; align-items:flex-end">
                 <input type="date" id="resDesde"> <input type="date" id="resHasta">
-                <button class="btn" style="background:var(--blue); width:auto" onclick="calcularFacturacion()">Calcular</button>
+                <button class="btn" style="background:var(--blue); width:auto" onclick="calcularFacturacion()">Calcular Reporte</button>
             </div>
             <div id="resultadoFacturacion" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px"></div>
         </div>
 
         <div class="right-panels" id="panelDerecho" style="display:none">
             <div class="panel-section">
-                <h3>💰 Selección Actual</h3>
-                <div class="liq-box"><label>Viajes (+):</label><div id="sum-viajes" style="color:var(--accent); font-weight:bold">$ 0</div></div>
-                <div class="liq-box"><label>Gastos (-):</label><div id="sum-gastos" style="color:var(--red); font-weight:bold">$ 0</div></div>
-                <div class="liq-box" style="border-left:5px solid var(--blue)"><label>SALDO:</label><div id="liq-subtotal" style="font-size:22px; font-weight:bold">$ 0</div></div>
+                <h3>💰 Selección de Pago</h3>
+                <div class="liq-box"><label>Total Viajes (+):</label><div id="sum-viajes" style="color:var(--accent); font-weight:bold; font-size:18px;">$ 0</div></div>
+                <div class="liq-box"><label>Total Gastos (-):</label><div id="sum-gastos" style="color:var(--red); font-weight:bold; font-size:18px;">$ 0</div></div>
+                <div class="liq-box" style="border-left:5px solid var(--blue); background:#ebf5fb"><label>SALDO A LIQUIDAR:</label><div id="liq-subtotal" style="font-size:24px; font-weight:bold; color:var(--primary)">$ 0</div></div>
                 
-                <button class="btn" style="background:var(--accent); margin-top:10px" onclick="marcarComoPagados()">✔ Marcar Pagados</button>
-                <button class="btn" style="background:var(--blue)" onclick="exportarPDF()">⬇ Exportar PDF</button>
+                <button class="btn" style="background:var(--accent); margin-top:10px" onclick="marcarComoPagados()">✔ Marcar como Pagados</button>
+                <button class="btn" style="background:var(--blue)" onclick="exportarPDF()">⬇ Descargar PDF</button>
             </div>
             <div class="panel-section">
-                <h3>⚙️ Edición</h3>
-                <button id="btnEdit" class="btn" style="background:var(--orange); opacity:0.5" disabled onclick="prepararEdicion()">✎ Editar Registro</button>
-                <button id="btnDel" class="btn" style="background:var(--red); opacity:0.5" disabled onclick="eliminarSeleccionados()">✕ Borrar Seleccionados</button>
+                <h3>⚙️ Herramientas</h3>
+                <button id="btnEdit" class="btn" style="background:var(--orange); opacity:0.5" disabled onclick="prepararEdicion()">✎ Editar Item</button>
+                <button id="btnDel" class="btn" style="background:var(--red); opacity:0.5" disabled onclick="eliminarSeleccionados()">✕ Eliminar Selección</button>
             </div>
         </div>
     </div>
 
 <script>
+    // Mismo motor de Firebase y funciones que veníamos usando para mantener la compatibilidad total de datos
     const firebaseConfig = {
         apiKey: "AIzaSyCLBvSUo8NemdYL_zgP0Fo-tg8aLiggqgQ",
         authDomain: "viajes-con-iva.firebaseapp.com",
@@ -166,7 +219,7 @@
             const tr = document.createElement('tr');
             tr.innerHTML = `<td><input type="checkbox" class="chk" data-id="${item.id}" data-neto="${neto}" data-gasto="${item.adelVal || 0}"></td>
             <td><button class="status-pill ${item.estado || 'pendiente'}" onclick="cambiarEstado(${item.id})">${item.estado || 'pendiente'}</button></td>
-            <td>${item.fecha}</td><td>${item.factura || '-'}</td><td>${item.detalle}</td><td>${item.ton}</td><td>$${item.tar}</td><td>${item.descP || 0}%</td><td>$${Math.round(neto)}</td><td>$${item.adelVal || 0}</td><td>$${Math.round(saldo)}</td>`;
+            <td>${item.fecha}</td><td>${item.factura || '-'}</td><td style="text-align:left">${item.detalle}</td><td>${item.ton}</td><td>$${item.tar}</td><td>${item.descP || 0}%</td><td>$${Math.round(neto).toLocaleString()}</td><td>$${(item.adelVal || 0).toLocaleString()}</td><td><strong>$${Math.round(saldo).toLocaleString()}</strong></td>`;
             cuerpo.appendChild(tr);
         });
         actualizarTotalesLaterales();
@@ -180,8 +233,8 @@
 
     function marcarComoPagados() {
         const seleccionados = document.querySelectorAll('.chk:checked');
-        if(seleccionados.length === 0) return alert("Primero marcá los items con el cuadrito.");
-        if(confirm("¿Marcar los seleccionados como PAGADOS en la planilla?")) {
+        if(seleccionados.length === 0) return alert("Seleccioná los viajes que querés marcar.");
+        if(confirm("¿Marcar seleccionados como PAGADOS?")) {
             const ids = Array.from(seleccionados).map(c => parseInt(c.dataset.id));
             db.camiones[tIdx].items.forEach(it => { if(ids.includes(it.id)) it.estado = 'pagado'; });
             dbRef.set(db);
@@ -233,6 +286,7 @@
         document.getElementById('btnGuardar').style.display = 'none';
         document.getElementById('btnConfirmarEdit').style.display = 'inline-block';
         document.getElementById('btnCancelarEdit').style.display = 'inline-block';
+        window.scrollTo(0,0);
     }
 
     function confirmarEdicion() {
@@ -242,15 +296,15 @@
     }
 
     function cancelarEdicion() { editId = null; ['f_factura', 'f_detalle', 'f_ton', 'f_tar', 'f_monto', 'f_litros', 'f_desc'].forEach(id => document.getElementById(id).value = ""); document.getElementById('btnGuardar').style.display = 'inline-block'; document.getElementById('btnConfirmarEdit').style.display = 'none'; document.getElementById('btnCancelarEdit').style.display = 'none'; }
-    function eliminarSeleccionados() { if(confirm("¿Borrar?")) { const ids = Array.from(document.querySelectorAll('.chk:checked')).map(c => parseInt(c.dataset.id)); db.camiones[tIdx].items = db.camiones[tIdx].items.filter(it => !ids.includes(it.id)); dbRef.set(db); } }
-    function nuevoCamion() { const n = prompt("Nombre:"); if(n) { if(!db.camiones) db.camiones = []; db.camiones.push({nombre:n.toUpperCase(), items:[]}); dbRef.set(db); } }
-    function eliminarChofer(e, i) { e.stopPropagation(); if(confirm("¿Borrar chofer?")) { db.camiones.splice(i, 1); tIdx = null; dbRef.set(db); } }
+    function eliminarSeleccionados() { if(confirm("¿Borrar definitivamente?")) { const ids = Array.from(document.querySelectorAll('.chk:checked')).map(c => parseInt(c.dataset.id)); db.camiones[tIdx].items = db.camiones[tIdx].items.filter(it => !ids.includes(it.id)); dbRef.set(db); } }
+    function nuevoCamion() { const n = prompt("Nombre del Chofer:"); if(n) { if(!db.camiones) db.camiones = []; db.camiones.push({nombre:n.toUpperCase(), items:[]}); dbRef.set(db); } }
+    function eliminarChofer(e, i) { e.stopPropagation(); if(confirm("¿Borrar chofer y todos sus datos?")) { db.camiones.splice(i, 1); tIdx = null; dbRef.set(db); } }
     function verResumenGlobal() { tIdx = null; document.getElementById('mainGestion').style.display = 'none'; document.getElementById('panelDerecho').style.display = 'none'; document.getElementById('resumenSeccion').style.display = 'block'; }
     function calcularFacturacion() {
         let nC = 0, nS = 0; const d = document.getElementById('resDesde').value, h = document.getElementById('resHasta').value;
         db.camiones.forEach(c => { if(c.items) c.items.forEach(it => { if(it.fecha >= d && it.fecha <= h) { nC += (it.ton * it.tar) * (1 - ((it.descP || 0) / 100)); nS += (it.ton * it.tar); }}); });
         const iC = nC * 0.21, iS = nS * 0.21;
-        document.getElementById('resultadoFacturacion').innerHTML = `<div style="background:white; padding:15px; border-radius:10px; border-left:5px solid var(--blue)"><label>CON DESCUENTO</label><h2>$ ${Math.round(nC).toLocaleString()}</h2><p>IVA: $ ${Math.round(iC).toLocaleString()}</p><h3>TOTAL: $ ${Math.round(nC + iC).toLocaleString()}</h3></div><div style="background:white; padding:15px; border-radius:10px; border-left:5px solid var(--orange)"><label>SIN DESCUENTO</label><h2>$ ${Math.round(nS).toLocaleString()}</h2><p>IVA: $ ${Math.round(iS).toLocaleString()}</p><h3>TOTAL: $ ${Math.round(nS + iS).toLocaleString()}</h3></div>`;
+        document.getElementById('resultadoFacturacion').innerHTML = `<div style="background:white; padding:20px; border-radius:10px; border-left:5px solid var(--blue)"><h3>CON DESCUENTO</h3><h2>$ ${Math.round(nC).toLocaleString()}</h2><p>IVA: $ ${Math.round(iC).toLocaleString()}</p><hr><h3>TOTAL: $ ${Math.round(nC + iC).toLocaleString()}</h3></div><div style="background:white; padding:20px; border-radius:10px; border-left:5px solid var(--orange)"><h3>SIN DESCUENTO</h3><h2>$ ${Math.round(nS).toLocaleString()}</h2><p>IVA: $ ${Math.round(iS).toLocaleString()}</p><hr><h3>TOTAL: $ ${Math.round(nS + iS).toLocaleString()}</h3></div>`;
     }
 </script>
 </body>
