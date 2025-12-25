@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Logística PRO - SIN IVA</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root { --primary: #2c3e50; --accent: #27ae60; --blue: #2980b9; --orange: #e67e22; --red: #e74c3c; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 220px; background: var(--primary); color: white; padding: 20px; display: flex; flex-direction: column; flex-shrink: 0; }
+        .search-box { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: none; font-size: 13px; box-sizing: border-box; }
+        .truck-item { padding: 10px; background: rgba(255,255,255,0.1); margin-bottom: 8px; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .truck-item.active { background: var(--blue); font-weight: bold; }
+        .main-wrapper { display: flex; flex-grow: 1; overflow: hidden; }
+        .main { flex-grow: 1; padding: 20px; overflow-y: auto; display: none; }
+        .right-panels { width: 280px; background: #fff; border-left: 2px solid #ddd; display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; }
+        .panel-section { padding: 20px; border-bottom: 1px solid #eee; }
+        .liq-card { background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 10px; }
+        .liq-total { font-size: 24px; color: var(--accent); font-weight: bold; }
+        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; border-top: 5px solid var(--primary); }
+        .edit-mode { border-top-color: var(--orange) !important; background: #fffcf5; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; }
+        .field { display: flex; flex-direction: column; }
+        label { font-size: 10px; font-weight: bold; color: #777; margin-bottom: 4px; text-transform: uppercase; }
+        input, select { padding: 7px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; outline: none; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; background: white; }
+        th { background: #f1f5f9; padding: 10px; border-bottom: 2px solid #cbd5e1; }
+        td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; }
+        .btn-status { padding: 4px 8px; border-radius: 4px; font-size: 9px; cursor: pointer; border: none; color: white; width: 75px; font-weight: bold; }
+        .status-pendiente { background: var(--red); }
+        .status-pagado { background: var(--accent); }
+        .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+        .sum-card { background: white; padding: 10px; border-radius: 8px; text-align: right; border-bottom: 4px solid var(--accent); }
+        .btn { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; width: 100%; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h3>VIAJES SIN IVA</h3>
+        <input type="text" id="buscador" class="search-box" placeholder="Buscar chofer..." oninput="renderSidebar()">
+        <div id="truckList" style="flex-grow:1; overflow-y:auto"></div>
+        <div style="display: flex; gap: 5px; margin-top:10px;">
+            <button onclick="nuevoCamion()" style="flex:4; padding:10px; background:var(--accent); color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer">+ Chofer</button>
+            <button onclick="verResumenGlobal()" style="flex:1; padding:10px; background:var(--orange); color:white; border:none; border-radius:4px; cursor:pointer">📂</button>
+        </div>
+    </div>
+    <div class="main-wrapper">
+        <div class="main" id="mainGestion">
+            <h2 id="truckTitle" style="margin-top:0"></h2>
+            <div class="card" id="formCard">
+                <div class="form-grid">
+                    <div class="field"><label>Fecha</label><input type="date" id="f_fecha" class="nav"></div>
+                    <div class="field"><label>Detalle</label><input type="text" id="f_detalle" class="nav"></div>
+                    <div class="field"><label>TN</label><input type="number" id="f_ton" class="nav"></div>
+                    <div class="field"><label>Tarifa $</label><input type="number" id="f_tar" class="nav"></div>
+                    <div class="field"><label>Desc %</label><input type="number" id="f_desc" placeholder="0" class="nav"></div>
+                    <div class="field"><label>Tipo</label><select id="f_tipo_adel" class="nav" onchange="toggleGasoil()"><option value="Pago">Viaje</option><option value="Gasoil">Gasoil</option><option value="Adelanto">Adelanto</option></select></div>
+                    <div class="field" id="div_litros" style="display:none"><label>Litros</label><input type="number" id="f_litros" class="nav"></div>
+                    <div class="field"><label>Gasto/Adelanto $</label><input type="number" id="f_adel_val" class="nav"></div>
+                </div>
+                <div style="margin-top:10px; display:flex; gap:10px;" id="btnNormal"><button class="btn" style="background:var(--accent); width:auto;" onclick="guardar()">Cargar Registro</button></div>
+                <div style="margin-top:10px; display:none; gap:10px;" id="btnEdit"><button class="btn" style="background:var(--orange); width:auto;" onclick="confirmarEdicion()">Confirmar Edición</button><button class="btn" style="background:#888; width:auto;" onclick="cancelarEdicion()">Cancelar</button></div>
+            </div>
+            <table><thead><tr><th>Sel.</th><th>Fecha</th><th>Estado</th><th>Detalle</th><th>TN</th><th>Tarifa</th><th>Desc.</th><th>Neto</th><th>Gasto</th><th>Saldo</th></tr></thead><tbody id="tablaCuerpo"></tbody></table>
+            <div class="summary"><div class="sum-card"><span>NETO TOTAL</span><strong id="indNeto">$ 0</strong></div><div class="sum-card" style="border-color:var(--orange)"><span>TOTAL GASTOS</span><strong id="indAdel">$ 0</strong></div><div class="sum-card" style="border-color:var(--accent)"><span>SALDO A PAGAR</span><strong id="indFinal">$ 0</strong></div></div>
+        </div>
+        <div class="main" id="resumenSeccion">
+            <h2>📂 Reporte de Facturación (SIN IVA)</h2>
+            <div class="card" style="display:flex; gap:15px; align-items:flex-end; background:#f0f4f8">
+                <div class="field"><label>Desde:</label><input type="date" id="resDesde"></div>
+                <div class="field"><label>Hasta:</label><input type="date" id="resHasta"></div>
+                <button class="btn" style="background:var(--blue); width:auto" onclick="calcularFacturacion()">Calcular Totales</button>
+            </div>
+            <div id="resultadoFacturacion"></div>
+        </div>
+        <div class="right-panels" id="panelDerecho" style="display:none">
+            <div class="panel-section">
+                <h3>💰 Liquidación</h3>
+                <div class="liq-card"><label>Suma Seleccionada:</label><div id="liq-subtotal">$ 0.00</div></div>
+                <div class="liq-card"><label>Descuento Extra:</label><input type="number" id="liq-adelanto-input" value="0" oninput="calcularLiquidacion()" style="width:100%"></div>
+                <div class="liq-card" style="border-left:5px solid var(--accent)"><label>FINAL A PAGAR:</label><div id="liq-total-final" class="liq-total">$ 0.00</div></div>
+                <button class="btn" style="background:var(--blue)" onclick="exportarPDFChofer()">Exportar PDF</button>
+            </div>
+            <div class="panel-section">
+                <h3>⚙️ Acciones</h3>
+                <button id="btnAccionEdit" class="btn" style="background:var(--orange); opacity:0.5" disabled onclick="prepararEdicionDesdeCheck()">✎ Editar</button>
+                <button id="btnAccionDel" class="btn" style="background:var(--red); opacity:0.5" disabled onclick="eliminarDesdeCheck()">✕ Borrar</button>
+            </div>
+        </div>
+    </div>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCLBvSUo8NemdYL_zgP0Fo-tg8aLiggqgQ",
+        authDomain: "viajes-con-iva.firebaseapp.com",
+        databaseURL: "https://viajes-con-iva-default-rtdb.firebaseio.com",
+        projectId: "viajes-con-iva",
+        storageBucket: "viajes-con-iva.firebasestorage.app",
+        messagingSenderId: "659354481888",
+        appId: "1:659354481888:web:faec78a76d6fcb674d4c85"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const dbRef = firebase.database().ref('viajes_SIN_IVA');
+    let db = { camiones: [] };
+    let tIdx = null; let editId = null;
+    dbRef.on('value', (s) => { db = s.val() || { camiones: [] }; renderSidebar(); if (tIdx !== null) renderTabla(); });
+    function save() { dbRef.set(db); }
+    function renderSidebar() {
+        const div = document.getElementById('truckList'); const filtro = document.getElementById('buscador').value.toLowerCase(); div.innerHTML = "";
+        if(!db.camiones) return;
+        db.camiones.forEach((c, i) => {
+            if (c.nombre.toLowerCase().includes(filtro)) {
+                const d = document.createElement('div'); d.className = `truck-item ${tIdx === i ? 'active' : ''}`;
+                d.innerHTML = `<span>${c.nombre}</span><button style="color:#ff7675; border:none; background:none;" onclick="eliminarChofer(event, ${i})">✕</button>`;
+                d.onclick = () => { tIdx = i; abrirChofer(); }; div.appendChild(d);
+            }
+        });
+    }
+    function abrirChofer() { document.getElementById('resumenSeccion').style.display = 'none'; document.getElementById('mainGestion').style.display = 'block'; document.getElementById('panelDerecho').style.display = 'flex'; document.getElementById('truckTitle').innerText = "Chofer: " + db.camiones[tIdx].nombre; renderTabla(); }
+    function renderTabla() {
+        const cuerpo = document.getElementById('tablaCuerpo'); cuerpo.innerHTML = ""; let sNeto = 0, sAdel = 0, sFinal = 0;
+        if (!db.camiones[tIdx].items) db.camiones[tIdx].items = [];
+        db.camiones[tIdx].items.forEach(item => {
+            const neto = (item.ton * item.tar) * (1 - (item.descP / 100)); const saldo = neto - item.adelVal;
+            sNeto += neto; sAdel += item.adelVal; sFinal += saldo;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td><input type="checkbox" class="chk-liq" data-id="${item.id}" data-valor="${saldo}" onchange="calcularLiquidacion()"></td><td>${item.fecha.split('-').reverse().join('/')}</td><td><button class="btn-status ${item.estado==='pendiente'?'status-pendiente':'status-pagado'}" onclick="cambiarEstado(${item.id})">${item.estado}</button></td><td style="text-align:left">${item.detalle}</td><td>${item.ton}</td><td>$${item.tar}</td><td>${item.descP}%</td><td>$${neto.toFixed(0)}</td><td>$${item.adelVal}</td><td>$${saldo.toFixed(0)}</td>`;
+            cuerpo.appendChild(tr);
+        });
+        document.getElementById('indNeto').innerText = `$ ${Math.round(sNeto).toLocaleString()}`; document.getElementById('indAdel').innerText = `$ ${Math.round(sAdel).toLocaleString()}`; document.getElementById('indFinal').innerText = `$ ${Math.round(sFinal).toLocaleString()}`;
+    }
+    function guardar() {
+        const item = { id: Date.now(), fecha: document.getElementById('f_fecha').value, detalle: document.getElementById('f_detalle').value, ton: parseFloat(document.getElementById('f_ton').value) || 0, tar: parseFloat(document.getElementById('f_tar').value) || 0, descP: parseFloat(document.getElementById('f_desc').value) || 0, adelVal: parseFloat(document.getElementById('f_adel_val').value) || 0, estado: 'pendiente' };
+        if(!db.camiones[tIdx].items) db.camiones[tIdx].items = []; db.camiones[tIdx].items.push(item); save(); limpiarForm();
+    }
+    function cambiarEstado(id) { const it = db.camiones[tIdx].items.find(x => x.id === id); it.estado = it.estado === 'pendiente' ? 'pagado' : 'pendiente'; save(); }
+    function nuevoCamion() { const nom = prompt("Nombre Chofer:"); if (nom) { if(!db.camiones) db.camiones = []; db.camiones.push({ nombre: nom.toUpperCase(), items: [] }); save(); } }
+    function eliminarChofer(e, i) { e.stopPropagation(); if(confirm("¿Borrar chofer?")) { db.camiones.splice(i, 1); tIdx = null; save(); } }
+    function limpiarForm() { ['f_detalle', 'f_ton', 'f_tar', 'f_adel_val', 'f_desc'].forEach(id => document.getElementById(id).value = ""); }
+    function calcularLiquidacion() {
+        let suma = 0; document.querySelectorAll('.chk-liq:checked').forEach(c => suma += parseFloat(c.getAttribute('data-valor')));
+        const extra = parseFloat(document.getElementById('liq-adelanto-input').value) || 0;
+        document.getElementById('liq-subtotal').innerText = `$ ${Math.round(suma).toLocaleString()}`;
+        document.getElementById('liq-total-final').innerText = `$ ${Math.round(suma - extra).toLocaleString()}`;
+        const eb = document.getElementById('btnAccionEdit'); const dbBtn = document.getElementById('btnAccionDel');
+        eb.disabled = (document.querySelectorAll('.chk-liq:checked').length !== 1); eb.style.opacity = eb.disabled ? "0.5" : "1";
+        dbBtn.disabled = (document.querySelectorAll('.chk-liq:checked').length === 0); dbBtn.style.opacity = dbBtn.disabled ? "0.5" : "1";
+    }
+    function eliminarDesdeCheck() { if(confirm("¿Borrar seleccionados?")) { document.querySelectorAll('.chk-liq:checked').forEach(c => { const id = parseInt(c.getAttribute('data-id')); db.camiones[tIdx].items = db.camiones[tIdx].items.filter(x => x.id !== id); }); save(); } }
+    function verResumenGlobal() { tIdx = null; document.getElementById('mainGestion').style.display = 'none'; document.getElementById('panelDerecho').style.display = 'none'; document.getElementById('resumenSeccion').style.display = 'block'; }
+    function toggleGasoil() { document.getElementById('div_litros').style.display = document.getElementById('f_tipo_adel').value === 'Gasoil' ? 'flex' : 'none'; }
+    function exportarPDFChofer() { const opt = { margin: 0.5, filename: 'liquidacion.pdf', html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }; html2pdf().set(opt).from(document.getElementById('mainGestion')).save(); }
+</script>
+</body>
+</html>
