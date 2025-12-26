@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2830/2830305.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2830/2830305.png">
 
-    <title>PRO Logística</title>
+    <title>PRO Logística (SIN IVA)</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -48,7 +48,7 @@
 
     <div id="lockscreen">
         <div class="login-card">
-            <h2>LOGÍSTICA PRO</h2>
+            <h2>LOGÍSTICA PRO (SIN IVA)</h2>
             <input type="password" id="passInput" placeholder="Clave de acceso" onkeydown="if(event.key==='Enter') verificar()">
             <button class="btn" style="background:var(--blue); width:200px; margin-top:15px;" onclick="verificar()">ENTRAR</button>
         </div>
@@ -136,14 +136,8 @@
         messagingSenderId: "659354481888",
         appId: "1:659354481888:web:faec78a76d6fcb674d4c85"
     };
-    
     firebase.initializeApp(firebaseConfig);
-    
-    // --- ESTO HABILITA EL MODO OFFLINE ---
-    // Importante: No borres estas líneas, son las que permiten trabajar sin internet
     const dbRef = firebase.database().ref('viajes_SIN_IVA');
-    // Para Realtime Database, la persistencia se maneja así:
-    // Firebase mantiene una cola de cambios y los sube cuando hay señal automáticamente.
 
     let db = { camiones: [] }; let tIdx = null; let editId = null;
 
@@ -179,14 +173,14 @@
         db.camiones[tIdx].items.forEach(item => {
             const neto = (item.ton * item.tar) * (1 - ((item.descP || 0) / 100));
             const gasto = item.adelVal || 0;
-            const saldo = neto - gasto;
+            const saldo = (item.tipo === 'Viaje' ? neto : 0) - gasto;
             let fD = item.factura || '-'; let dD = item.detalle || '';
-            if(item.tipo==='Adelanto') fD=`<span style="color:#b91c1c; font-weight:bold;">ADELANTO</span> ${item.factura||''}`;
-            if(item.tipo==='Pago') fD=`<span style="color:#1d4ed8; font-weight:bold;">PAGO</span> ${item.factura||''}`;
+            if(item.tipo==='Adelanto') fD=`<span style="color:#b91c1c; font-weight:bold;">ADELANTO</span>`;
+            if(item.tipo==='Pago') fD=`<span style="color:#1d4ed8; font-weight:bold;">PAGO</span>`;
             if(item.tipo==='Gasoil') { fD=`<span style="color:#047857; font-weight:bold;">GASOIL</span>`; dD=`<strong>${item.litros||0} Lts</strong> - ${item.detalle||''}`; }
 
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td><input type="checkbox" class="chk" data-id="${item.id}" data-neto="${neto}" data-gasto="${gasto}"></td>
+            tr.innerHTML = `<td><input type="checkbox" class="chk" data-id="${item.id}" data-neto="${item.tipo==='Viaje'?neto:0}" data-gasto="${gasto}"></td>
             <td><button class="status-pill ${item.estado || 'pendiente'}" onclick="cambiarEstado(${item.id})">${item.estado || 'pendiente'}</button></td>
             <td>${item.fecha}</td><td>${fD}</td><td style="text-align:left">${dD}</td><td>${item.ton||''}</td><td>${item.tar?'$'+item.tar:''}</td><td>${item.descP||0}%</td><td>$${Math.round(neto).toLocaleString()}</td><td>$${gasto.toLocaleString()}</td><td><strong>$${Math.round(saldo).toLocaleString()}</strong></td>`;
             cuerpo.appendChild(tr);
@@ -301,7 +295,10 @@
         tablaClonada.querySelectorAll('tr').forEach(fila => {
             fila.deleteCell(0); 
             fila.deleteCell(0); 
-            Array.from(fila.cells).forEach(c => c.style.padding = "4px");
+            Array.from(fila.cells).forEach(c => {
+                c.style.padding = "4px";
+                c.style.border = "1px solid #ddd";
+            });
         });
         element.innerHTML = `
             <div style="text-align:center; border-bottom: 2px solid #2c3e50; margin-bottom: 10px; padding-bottom: 5px;">
@@ -315,10 +312,19 @@
                     <div style="display:flex; justify-content:space-between;"><span>Total Viajes:</span> <span>${vT}</span></div>
                     <div style="display:flex; justify-content:space-between; color:red;"><span>Total Gastos:</span> <span>${gT}</span></div>
                     <hr>
-                    <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:bold;"><span>SALDO:</span> <span>${sT}</span></div>
+                    <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:bold;"><span>SALDO FINAL:</span> <span>${sT}</span></div>
                 </div>
             </div>`;
-        html2pdf().set({ margin: 10, filename: `Liq_${chofer}.pdf`, jsPDF: { orientation: 'landscape' }, pagebreak: { mode: 'avoid-all' } }).from(element).save();
+        
+        const opt = {
+            margin: 10,
+            filename: `Liq_${chofer}.pdf`,
+            image: { type: 'jpeg', quality: 1 },
+            html2canvas: { scale: 3, useCORS: true, letterRendering: true }, // MÁXIMA NITIDEZ
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+            pagebreak: { mode: 'avoid-all' }
+        };
+        html2pdf().set(opt).from(element).save();
     }
 </script>
 </body>
