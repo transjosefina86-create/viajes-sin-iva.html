@@ -70,9 +70,9 @@
                     <div class="field"><label>Fecha</label><input type="date" id="f_fecha" class="nav"></div>
                     <div class="field"><label>Factura</label><input type="text" id="f_factura" class="nav" placeholder="N°"></div>
                     <div class="field-detalle"><label>Detalle</label><input type="text" id="f_detalle" class="nav" placeholder="Origen - Destino"></div>
-                    <div class="field"><label>TN</label><input type="number" id="f_ton" class="nav" placeholder="TN"></div>
-                    <div class="field"><label>Tarifa</label><input type="number" id="f_tar" class="nav" placeholder="$"></div>
-                    <div class="field"><label>Desc %</label><input type="number" id="f_desc" class="nav" placeholder="%"></div>
+                    <div class="field"><label>TN</label><input type="number" step="0.01" id="f_ton" class="nav" placeholder="TN"></div>
+                    <div class="field"><label>Tarifa</label><input type="number" step="0.01" id="f_tar" class="nav" placeholder="$"></div>
+                    <div class="field"><label>Desc %</label><input type="number" step="0.01" id="f_desc" class="nav" placeholder="%"></div>
                     <div class="field"><label>Tipo</label>
                         <select id="f_tipo" class="nav" onchange="toggleGasoil()">
                             <option value="Viaje">Viaje</option>
@@ -81,8 +81,8 @@
                             <option value="Pago">Pago</option>
                         </select>
                     </div>
-                    <div class="field" id="div_litros" style="display:none"><label>Litros</label><input type="number" id="f_litros" class="nav" placeholder="Lts"></div>
-                    <div class="field"><label>Monto $</label><input type="number" id="f_monto" class="nav" placeholder="$"></div>
+                    <div class="field" id="div_litros" style="display:none"><label>Litros</label><input type="number" step="0.01" id="f_litros" class="nav" placeholder="Lts"></div>
+                    <div class="field"><label>Monto $</label><input type="number" step="0.01" id="f_monto" class="nav" placeholder="$"></div>
                 </div>
                 <div style="display:flex; gap:10px; margin-top:20px; justify-content: flex-end;">
                     <button id="btnGuardar" class="btn" style="background:var(--accent); width:180px" onclick="guardar()">Cargar Registro</button>
@@ -112,9 +112,9 @@
         <div class="right-panels" id="panelDerecho" style="display:none">
             <div class="panel-section">
                 <h3>💰 Liquidación</h3>
-                <div class="liq-box"><label>Viajes (+):</label><div id="sum-viajes" style="color:var(--accent); font-weight:bold;">$ 0</div></div>
-                <div class="liq-box"><label>Gastos (-):</label><div id="sum-gastos" style="color:var(--red); font-weight:bold;">$ 0</div></div>
-                <div class="liq-box" style="border-left:5px solid var(--blue); background:#f0f9ff"><label>SALDO FINAL:</label><div id="liq-subtotal" style="font-size:22px; font-weight:bold; color:#1e3a8a;">$ 0</div></div>
+                <div class="liq-box"><label>Viajes (+):</label><div id="sum-viajes" style="color:var(--accent); font-weight:bold;">$ 0.00</div></div>
+                <div class="liq-box"><label>Gastos (-):</label><div id="sum-gastos" style="color:var(--red); font-weight:bold;">$ 0.00</div></div>
+                <div class="liq-box" style="border-left:5px solid var(--blue); background:#f0f9ff"><label>SALDO FINAL:</label><div id="liq-subtotal" style="font-size:22px; font-weight:bold; color:#1e3a8a;">$ 0.00</div></div>
                 <button class="btn" style="background:var(--accent); margin-top:10px" onclick="marcarComoPagados()">✔ Marcar Pagados</button>
                 <button class="btn" style="background:var(--blue)" onclick="exportarPDF()">⬇ Descargar PDF Chofer</button>
             </div>
@@ -182,7 +182,7 @@
             const tr = document.createElement('tr');
             tr.innerHTML = `<td><input type="checkbox" class="chk" data-id="${item.id}" data-neto="${item.tipo==='Viaje'?neto:0}" data-gasto="${gasto}"></td>
             <td><button class="status-pill ${item.estado || 'pendiente'}" onclick="cambiarEstado(${item.id})">${item.estado || 'pendiente'}</button></td>
-            <td>${item.fecha}</td><td>${fD}</td><td style="text-align:left">${dD}</td><td>${item.ton||''}</td><td>${item.tar?'$'+item.tar:''}</td><td>${item.descP||0}%</td><td>$${Math.round(neto).toLocaleString()}</td><td>$${gasto.toLocaleString()}</td><td><strong>$${Math.round(saldo).toLocaleString()}</strong></td>`;
+            <td>${item.fecha}</td><td>${fD}</td><td style="text-align:left">${dD}</td><td>${item.ton||''}</td><td>${item.tar?'$'+item.tar:''}</td><td>${item.descP||0}%</td><td>$${neto.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td><td>$${gasto.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td><td><strong>$${saldo.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>`;
             cuerpo.appendChild(tr);
         });
         actualizarTotales();
@@ -253,24 +253,24 @@
         document.getElementById('resultadoFacturacion').innerHTML = `
             <div class="card" style="border-left:8px solid var(--blue); padding:25px;">
                 <h3 style="color:var(--blue)">CON DESCUENTO</h3>
-                <p>Neto: $ ${Math.round(nCon).toLocaleString()}</p>
-                <p>IVA: $ ${Math.round(iCon).toLocaleString()}</p>
-                <hr><h2>TOTAL: $ ${Math.round(nCon + iCon).toLocaleString()}</h2>
+                <p>Neto: $ ${nCon.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                <p>IVA: $ ${iCon.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                <hr><h2>TOTAL: $ ${(nCon + iCon).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</h2>
             </div>
             <div class="card" style="border-left:8px solid var(--orange); padding:25px;">
                 <h3 style="color:var(--orange)">SIN DESCUENTO</h3>
-                <p>Neto: $ ${Math.round(nSin).toLocaleString()}</p>
-                <p>IVA: $ ${Math.round(iSin).toLocaleString()}</p>
-                <hr><h2>TOTAL: $ ${Math.round(nSin + iSin).toLocaleString()}</h2>
+                <p>Neto: $ ${nSin.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                <p>IVA: $ ${iSin.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                <hr><h2>TOTAL: $ ${(nSin + iSin).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</h2>
             </div>`;
     }
 
     function actualizarTotales() {
         const seleccionados = document.querySelectorAll('.chk:checked');
         let vT = 0, gT = 0; seleccionados.forEach(x => { vT += parseFloat(x.dataset.neto); gT += parseFloat(x.dataset.gasto); });
-        document.getElementById('sum-viajes').innerText = `$ ${Math.round(vT).toLocaleString()}`;
-        document.getElementById('sum-gastos').innerText = `$ ${Math.round(gT).toLocaleString()}`;
-        document.getElementById('liq-subtotal').innerText = `$ ${Math.round(vT - gT).toLocaleString()}`;
+        document.getElementById('sum-viajes').innerText = `$ ${vT.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('sum-gastos').innerText = `$ ${gT.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('liq-subtotal').innerText = `$ ${(vT - gT).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         document.getElementById('btnEdit').disabled = seleccionados.length !== 1;
         document.getElementById('btnEdit').style.opacity = seleccionados.length !== 1 ? "0.5" : "1";
         document.getElementById('btnDel').disabled = seleccionados.length === 0;
@@ -307,8 +307,8 @@
                 <p style="font-size: 10px;">Fecha: ${new Date().toLocaleDateString()}</p>
             </div>
             ${tablaClonada.outerHTML}
-            <div style="margin-top:15px; display: flex; justify-content: flex-end;">
-                <div style="width: 250px; background: #f0f0f0; padding: 10px; border: 1px solid #ccc; font-size: 11px;">
+            <div style="margin-top:15px; display:flex; justify-content:flex-end;">
+                <div style="width:250px; background:#f0f0f0; padding:10px; border:1px solid #ccc; font-size:11px;">
                     <div style="display:flex; justify-content:space-between;"><span>Total Viajes:</span> <span>${vT}</span></div>
                     <div style="display:flex; justify-content:space-between; color:red;"><span>Total Gastos:</span> <span>${gT}</span></div>
                     <hr>
@@ -320,7 +320,7 @@
             margin: 10,
             filename: `Liq_${chofer}.pdf`,
             image: { type: 'jpeg', quality: 1 },
-            html2canvas: { scale: 3, useCORS: true, letterRendering: true }, // MÁXIMA NITIDEZ
+            html2canvas: { scale: 3, useCORS: true, letterRendering: true },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
             pagebreak: { mode: 'avoid-all' }
         };
