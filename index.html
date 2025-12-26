@@ -50,11 +50,6 @@
         .right-panels { width: 300px; background: #fff; border-left: 2px solid #ddd; display: flex; flex-direction: column; }
         .panel-section { padding: 20px; border-bottom: 1px solid #eee; }
         .liq-box { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0; }
-
-        /* Estilos específicos para el PDF */
-        #pdf-content { padding: 20px; background: white; }
-        .pdf-header { text-align: center; border-bottom: 2px solid #2c3e50; margin-bottom: 20px; padding-bottom: 10px; }
-        .pdf-resumen { display: flex; justify-content: space-around; margin-top: 20px; background: #f1f5f9; padding: 15px; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -105,31 +100,30 @@
                 </div>
             </div>
 
-            <div id="exportArea">
-                <table id="tablaViajes">
-                    <thead>
-                        <tr><th>Sel.</th><th>Estado</th><th>Fecha</th><th>Factura</th><th>Detalle</th><th>TN</th><th>Tarifa</th><th>Desc.</th><th>Neto</th><th>Gasto</th><th>Saldo</th></tr>
-                    </thead>
-                    <tbody id="tablaCuerpo"></tbody>
-                </table>
-            </div>
+            <table id="tablaViajes">
+                <thead>
+                    <tr><th>Sel.</th><th>Estado</th><th>Fecha</th><th>Factura</th><th>Detalle</th><th>TN</th><th>Tarifa</th><th>Desc.</th><th>Neto</th><th>Gasto</th><th>Saldo</th></tr>
+                </thead>
+                <tbody id="tablaCuerpo"></tbody>
+            </table>
         </div>
 
         <div class="main" id="resumenSeccion">
-            <h2>Reporte de Facturación (IVA 21%)</h2>
-            <div class="card" style="display:flex; gap:15px; align-items:flex-end">
-                <div><label>Desde</label><input type="date" id="resDesde"></div>
-                <div><label>Hasta</label><input type="date" id="resHasta"></div>
-                <button class="btn" style="background:var(--blue); width:auto; padding: 10px 40px;" onclick="calcularFacturacion()">Calcular</button>
+            <h2 style="color:var(--primary)">Reporte de Facturación Mensual</h2>
+            <div class="card" style="display:flex; gap:15px; align-items:flex-end; border-top-color: var(--orange);">
+                <div class="field"><label>Desde</label><input type="date" id="resDesde"></div>
+                <div class="field"><label>Hasta</label><input type="date" id="resHasta"></div>
+                <button class="btn" style="background:var(--blue); width:auto; padding: 10px 40px;" onclick="calcularFacturacion()">Calcular Reporte</button>
             </div>
-            <div id="resultadoFacturacion" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px"></div>
+            <div id="resultadoFacturacion" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px">
+                </div>
         </div>
 
         <div class="right-panels" id="panelDerecho" style="display:none">
             <div class="panel-section">
                 <h3>💰 Liquidación</h3>
-                <div class="liq-box"><label>Viajes (+):</label><div id="sum-viajes" style="color:var(--accent); font-weight:bold; font-size:1.2em;">$ 0</div></div>
-                <div class="liq-box"><label>Gastos (-):</label><div id="sum-gastos" style="color:var(--red); font-weight:bold; font-size:1.2em;">$ 0</div></div>
+                <div class="liq-box"><label>Viajes (+):</label><div id="sum-viajes" style="color:var(--accent); font-weight:bold;">$ 0</div></div>
+                <div class="liq-box"><label>Gastos (-):</label><div id="sum-gastos" style="color:var(--red); font-weight:bold;">$ 0</div></div>
                 <div class="liq-box" style="border-left:5px solid var(--blue); background:#f0f9ff"><label>SALDO FINAL:</label><div id="liq-subtotal" style="font-size:22px; font-weight:bold; color:#1e3a8a;">$ 0</div></div>
                 <button class="btn" style="background:var(--accent); margin-top:10px" onclick="marcarComoPagados()">✔ Marcar Pagados</button>
                 <button class="btn" style="background:var(--blue)" onclick="exportarPDF()">⬇ Descargar PDF Chofer</button>
@@ -156,19 +150,14 @@
     const dbRef = firebase.database().ref('viajes_SIN_IVA');
     let db = { camiones: [] }; let tIdx = null; let editId = null;
 
-    window.onload = () => { document.getElementById('f_fecha').valueAsDate = new Date(); };
+    window.onload = () => { 
+        document.getElementById('f_fecha').valueAsDate = new Date();
+        document.getElementById('resDesde').valueAsDate = new Date();
+        document.getElementById('resHasta').valueAsDate = new Date();
+    };
+
     function verificar() { if(document.getElementById('passInput').value === "1234") document.getElementById('lockscreen').style.display = 'none'; else alert("Clave Incorrecta"); }
     function toggleGasoil() { document.getElementById('div_litros').style.display = document.getElementById('f_tipo').value === 'Gasoil' ? 'flex' : 'none'; }
-
-    // NAVEGACIÓN ENTER
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && e.target.classList.contains('nav')) {
-            const inputs = Array.from(document.querySelectorAll('.nav')).filter(i => i.offsetParent !== null);
-            const idx = inputs.indexOf(e.target);
-            if (idx < inputs.length - 1) { e.preventDefault(); inputs[idx + 1].focus(); }
-            else { e.preventDefault(); guardar(); }
-        }
-    });
 
     dbRef.on('value', (s) => { db = s.val() || { camiones: [] }; renderSidebar(); if (tIdx !== null) renderTabla(); });
 
@@ -216,6 +205,16 @@
         document.getElementById('f_factura').focus();
     }
 
+    // NAVEGACIÓN ENTER
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.target.classList.contains('nav')) {
+            const inputs = Array.from(document.querySelectorAll('.nav')).filter(i => i.offsetParent !== null);
+            const idx = inputs.indexOf(e.target);
+            if (idx < inputs.length - 1) { e.preventDefault(); inputs[idx + 1].focus(); }
+            else { e.preventDefault(); guardar(); }
+        }
+    });
+
     function prepararEdicion() {
         const id = parseInt(document.querySelector('.chk:checked').dataset.id);
         const item = db.camiones[tIdx].items.find(x => x.id === id);
@@ -243,7 +242,53 @@
     function cancelarEdicion() { editId = null; ['f_factura', 'f_detalle', 'f_ton', 'f_tar', 'f_monto', 'f_litros', 'f_desc'].forEach(id => document.getElementById(id).value = ""); document.getElementById('btnGuardar').style.display = 'inline-block'; document.getElementById('btnConfirmarEdit').style.display = 'none'; document.getElementById('btnCancelarEdit').style.display = 'none'; }
     function eliminarSeleccionados() { if(confirm("¿Borrar seleccionados?")) { const ids = Array.from(document.querySelectorAll('.chk:checked')).map(c => parseInt(c.dataset.id)); db.camiones[tIdx].items = db.camiones[tIdx].items.filter(it => !ids.includes(it.id)); dbRef.set(db); } }
     function eliminarChofer(e, i) { e.stopPropagation(); if(confirm("¿Borrar chofer?")) { db.camiones.splice(i, 1); tIdx = null; dbRef.set(db); } }
-    function verResumenGlobal() { tIdx = null; document.getElementById('mainGestion').style.display = 'none'; document.getElementById('panelDerecho').style.display = 'none'; document.getElementById('resumenSeccion').style.display = 'block'; }
+
+    // BOTÓN RESUMEN MENSUAL
+    function verResumenGlobal() { 
+        tIdx = null; 
+        document.getElementById('mainGestion').style.display = 'none'; 
+        document.getElementById('panelDerecho').style.display = 'none'; 
+        document.getElementById('resumenSeccion').style.display = 'block'; 
+    }
+
+    // CÁLCULO DE IVA Y DESCUENTOS (REPARADO)
+    function calcularFacturacion() {
+        let netoConDesc = 0; // Neto total aplicando el % de descuento
+        let netoSinDesc = 0; // Neto total sin aplicar el % de descuento (tarifa plena)
+        const d = document.getElementById('resDesde').value;
+        const h = document.getElementById('resHasta').value;
+
+        db.camiones.forEach(c => {
+            if(c.items) {
+                c.items.forEach(it => {
+                    if(it.fecha >= d && it.fecha <= h && it.tipo === 'Viaje') {
+                        const subtotal = (it.ton * it.tar);
+                        netoSinDesc += subtotal;
+                        netoConDesc += subtotal * (1 - ((it.descP || 0) / 100));
+                    }
+                });
+            }
+        });
+
+        const ivaCon = netoConDesc * 0.21;
+        const ivaSin = netoSinDesc * 0.21;
+
+        document.getElementById('resultadoFacturacion').innerHTML = `
+            <div class="card" style="border-left:8px solid var(--blue); padding:25px;">
+                <h3 style="margin:0 0 15px 0; color:var(--blue)">OPCIÓN CON DESCUENTO</h3>
+                <p>Neto Gravado: <strong>$ ${Math.round(netoConDesc).toLocaleString()}</strong></p>
+                <p>IVA (21%): <strong>$ ${Math.round(ivaCon).toLocaleString()}</strong></p>
+                <hr>
+                <h2 style="margin:15px 0 0 0">TOTAL: $ ${Math.round(netoConDesc + ivaCon).toLocaleString()}</h2>
+            </div>
+            <div class="card" style="border-left:8px solid var(--orange); padding:25px;">
+                <h3 style="margin:0 0 15px 0; color:var(--orange)">OPCIÓN SIN DESCUENTO</h3>
+                <p>Neto Gravado: <strong>$ ${Math.round(netoSinDesc).toLocaleString()}</strong></p>
+                <p>IVA (21%): <strong>$ ${Math.round(ivaSin).toLocaleString()}</strong></p>
+                <hr>
+                <h2 style="margin:15px 0 0 0">TOTAL: $ ${Math.round(netoSinDesc + ivaSin).toLocaleString()}</h2>
+            </div>`;
+    }
 
     function actualizarTotales() {
         const seleccionados = document.querySelectorAll('.chk:checked');
@@ -261,60 +306,32 @@
     function marcarComoPagados() { const ids = Array.from(document.querySelectorAll('.chk:checked')).map(c => parseInt(c.dataset.id)); db.camiones[tIdx].items.forEach(it => { if(ids.includes(it.id)) it.estado = 'pagado'; }); dbRef.set(db); }
     function nuevoCamion() { const n = prompt("Nombre:"); if(n) { if(!db.camiones) db.camiones = []; db.camiones.push({nombre:n.toUpperCase(), items:[]}); dbRef.set(db); } }
 
-    // --- FUNCIÓN DE EXPORTACIÓN MEJORADA PARA PDF ---
+    // PDF LIMPIO PARA CHOFER
     function exportarPDF() {
         const chofer = db.camiones[tIdx].nombre;
         const viajes = document.getElementById('sum-viajes').innerText;
         const gastos = document.getElementById('sum-gastos').innerText;
         const saldo = document.getElementById('liq-subtotal').innerText;
-        
-        // Creamos un contenedor temporal invisible para el PDF
         const element = document.createElement('div');
         element.style.padding = "20px";
-        element.style.fontFamily = "Arial, sans-serif";
-        
-        // Clonamos la tabla pero quitamos la primera columna (Sel.) y la segunda (Estado) si querés
         const tablaClonada = document.getElementById('tablaViajes').cloneNode(true);
-        const filas = tablaClonada.querySelectorAll('tr');
-        filas.forEach(fila => {
-            fila.deleteCell(0); // Borra columna "Sel."
-            fila.deleteCell(0); // Borra columna "Estado"
-        });
+        tablaClonada.querySelectorAll('tr').forEach(fila => { fila.deleteCell(0); fila.deleteCell(0); });
 
         element.innerHTML = `
             <div style="text-align:center; border-bottom: 2px solid #2c3e50; margin-bottom: 20px; padding-bottom: 10px;">
                 <h1 style="margin:0; color:#2c3e50;">Liquidación de Transporte</h1>
-                <h2 style="margin:5px 0; color:#555;">Chofer: ${chofer}</h2>
-                <p>Fecha de emisión: ${new Date().toLocaleDateString()}</p>
+                <h2 style="margin:5px 0;">Chofer: ${chofer}</h2>
             </div>
-            
             ${tablaClonada.outerHTML}
-            
-            <div style="margin-top:30px; border-top: 2px solid #eee; padding-top: 20px;">
-                <div style="display: flex; justify-content: flex-end;">
-                    <div style="width: 300px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                        <p style="display:flex; justify-content:space-between; margin:5px 0;"><strong>Total Viajes:</strong> <span>${viajes}</span></p>
-                        <p style="display:flex; justify-content:space-between; margin:5px 0; color:#b91c1c;"><strong>Total Gastos:</strong> <span>${gastos}</span></p>
-                        <hr>
-                        <p style="display:flex; justify-content:space-between; margin:5px 0; font-size:1.4em; color:#1e3a8a;"><strong>SALDO FINAL:</strong> <span>${saldo}</span></p>
-                    </div>
+            <div style="margin-top:30px; display: flex; justify-content: flex-end;">
+                <div style="width: 300px; background: #f8fafc; padding: 15px; border: 1px solid #e2e8f0;">
+                    <p>Total Viajes: ${viajes}</p>
+                    <p style="color:#b91c1c;">Total Gastos: ${gastos}</p>
+                    <hr><h3>SALDO FINAL: ${saldo}</h3>
                 </div>
-            </div>
-            
-            <div style="margin-top:50px; text-align:center; font-size:10px; color:#999;">
-                Documento generado por Sistema PRO Logística
-            </div>
-        `;
+            </div>`;
 
-        const opt = {
-            margin:       10,
-            filename:     `Liquidacion_${chofer}_${new Date().toLocaleDateString()}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, logging: false },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
-        };
-
-        html2pdf().set(opt).from(element).save();
+        html2pdf().set({ margin: 10, filename: `Liq_${chofer}.pdf`, jsPDF: { orientation: 'landscape' } }).from(element).save();
     }
 </script>
 </body>
