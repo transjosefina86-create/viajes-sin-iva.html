@@ -3,20 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="PRO Logística">
-    
-    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2830/2830305.png">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2830/2830305.png">
-
     <title>PRO Logística (SIN IVA)</title>
-    
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    
     <style>
-        :root { --primary: #2c3e50; --accent: #27ae60; --blue: #2980b9; --orange: #e67e22; --red: #e74c3c; --bg: #f4f7f6; }
+        :root { --primary: #34495e; --accent: #27ae60; --blue: #2980b9; --orange: #e67e22; --red: #e74c3c; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         #lockscreen { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .login-card { background: white; padding: 40px; border-radius: 15px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
@@ -28,13 +20,13 @@
         .main { flex-grow: 1; padding: 20px; overflow-y: auto; display: none; }
         .card { background: white; padding: 18px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 5px solid var(--primary); }
         .form-grid { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
-        .field { display: flex; flex-direction: column; flex-grow: 1; min-width: 110px; }
-        .field-detalle { flex-grow: 4; min-width: 280px; }
+        .field { display: flex; flex-direction: column; flex-grow: 1; min-width: 100px; }
+        .field-detalle { flex-grow: 4; min-width: 250px; }
         label { font-size: 11px; font-weight: bold; color: #555; margin-bottom: 6px; text-transform: uppercase; }
         input, select { padding: 11px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; width: 100%; box-sizing: border-box; outline: none; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; background: white; }
-        th { background: #f8fafc; padding: 14px; border-bottom: 2px solid #cbd5e1; }
-        td { padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; background: white; }
+        th { background: #f8fafc; padding: 10px; border-bottom: 2px solid #cbd5e1; }
+        td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; }
         .status-pill { padding: 6px 12px; border-radius: 4px; font-size: 10px; font-weight: bold; border: none; color: white; cursor: pointer; }
         .pendiente { background: var(--red); }
         .pagado { background: var(--accent); }
@@ -59,7 +51,6 @@
         <input type="text" id="buscador" class="search-box" placeholder="🔍 Buscar chofer..." oninput="renderSidebar()">
         <div id="truckList" style="flex-grow:1; overflow-y:auto"></div>
         <button onclick="nuevoCamion()" class="btn" style="background:var(--accent); margin-top:10px;">+ Nuevo Chofer</button>
-        <button onclick="verResumenGlobal()" class="btn" style="background:var(--orange); margin-top:5px;">📂 Resumen Mensual</button>
     </div>
 
     <div class="main-wrapper">
@@ -68,11 +59,11 @@
             <div class="card" id="formCard">
                 <div class="form-grid">
                     <div class="field"><label>Fecha</label><input type="date" id="f_fecha" class="nav"></div>
-                    <div class="field"><label>Factura</label><input type="text" id="f_factura" class="nav" placeholder="N°"></div>
-                    <div class="field-detalle"><label>Detalle</label><input type="text" id="f_detalle" class="nav" placeholder="Origen - Destino"></div>
-                    <div class="field"><label>TN</label><input type="number" step="0.01" id="f_ton" class="nav" placeholder="TN"></div>
-                    <div class="field"><label>Tarifa</label><input type="number" step="0.01" id="f_tar" class="nav" placeholder="$"></div>
-                    <div class="field"><label>Desc %</label><input type="number" step="0.01" id="f_desc" class="nav" placeholder="%"></div>
+                    <div class="field"><label>Factura/Remito</label><input type="text" id="f_factura" class="nav" placeholder="N°"></div>
+                    <div class="field-detalle"><label>Detalle</label><input type="text" id="f_detalle" class="nav" placeholder="Origen - Destino / Comentario"></div>
+                    <div class="field"><label>TN</label><input type="number" step="any" id="f_ton" class="nav" placeholder="TN"></div>
+                    <div class="field"><label>Tarifa</label><input type="number" step="any" id="f_tar" class="nav" placeholder="$"></div>
+                    <div class="field"><label>Desc %</label><input type="number" step="any" id="f_desc" class="nav" placeholder="%"></div>
                     <div class="field"><label>Tipo</label>
                         <select id="f_tipo" class="nav" onchange="toggleGasoil()">
                             <option value="Viaje">Viaje</option>
@@ -81,8 +72,8 @@
                             <option value="Pago">Pago</option>
                         </select>
                     </div>
-                    <div class="field" id="div_litros" style="display:none"><label>Litros</label><input type="number" step="0.01" id="f_litros" class="nav" placeholder="Lts"></div>
-                    <div class="field"><label>Monto $</label><input type="number" step="0.01" id="f_monto" class="nav" placeholder="$"></div>
+                    <div class="field" id="div_litros" style="display:none"><label>Litros</label><input type="number" step="any" id="f_litros" class="nav" placeholder="Lts"></div>
+                    <div class="field"><label>Monto $</label><input type="number" step="any" id="f_monto" class="nav" placeholder="$"></div>
                 </div>
                 <div style="display:flex; gap:10px; margin-top:20px; justify-content: flex-end;">
                     <button id="btnGuardar" class="btn" style="background:var(--accent); width:180px" onclick="guardar()">Cargar Registro</button>
@@ -93,20 +84,10 @@
 
             <table id="tablaViajes">
                 <thead>
-                    <tr><th>Sel.</th><th>Estado</th><th>Fecha</th><th>Factura</th><th>Detalle</th><th>TN</th><th>Tarifa</th><th>Desc.</th><th>Neto</th><th>Gasto</th><th>Saldo</th></tr>
+                    <tr><th>Sel.</th><th>Estado</th><th>Fecha</th><th>Fact/Rem</th><th>Detalle</th><th>TN</th><th>Tarifa</th><th>Desc.</th><th>TOTAL</th><th>Gasto</th><th>Saldo</th></tr>
                 </thead>
                 <tbody id="tablaCuerpo"></tbody>
             </table>
-        </div>
-
-        <div class="main" id="resumenSeccion">
-            <h2>Reporte de Facturación Mensual</h2>
-            <div class="card" style="display:flex; gap:15px; align-items:flex-end; border-top-color: var(--orange);">
-                <div class="field"><label>Desde</label><input type="date" id="resDesde"></div>
-                <div class="field"><label>Hasta</label><input type="date" id="resHasta"></div>
-                <button class="btn" style="background:var(--blue); width:auto; padding: 10px 40px;" onclick="calcularFacturacion()">Calcular Reporte</button>
-            </div>
-            <div id="resultadoFacturacion" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px"></div>
         </div>
 
         <div class="right-panels" id="panelDerecho" style="display:none">
@@ -141,11 +122,9 @@
 
     let db = { camiones: [] }; let tIdx = null; let editId = null;
 
-    window.onload = () => { 
-        document.getElementById('f_fecha').valueAsDate = new Date();
-        document.getElementById('resDesde').valueAsDate = new Date();
-        document.getElementById('resHasta').valueAsDate = new Date();
-    };
+    function fM(num) { return (num || 0).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+
+    window.onload = () => { document.getElementById('f_fecha').valueAsDate = new Date(); };
 
     function verificar() { if(document.getElementById('passInput').value === "1234") document.getElementById('lockscreen').style.display = 'none'; else alert("Clave Incorrecta"); }
     function toggleGasoil() { document.getElementById('div_litros').style.display = document.getElementById('f_tipo').value === 'Gasoil' ? 'flex' : 'none'; }
@@ -160,7 +139,7 @@
             if (c.nombre.toLowerCase().includes(filtro)) {
                 const d = document.createElement('div'); d.className = `truck-item ${tIdx === i ? 'active' : ''}`;
                 d.innerHTML = `<span>${c.nombre}</span><button onclick="eliminarChofer(event, ${i})" style="background:none; border:none; color:white; cursor:pointer">✕</button>`;
-                d.onclick = () => { tIdx = i; document.getElementById('resumenSeccion').style.display='none'; document.getElementById('mainGestion').style.display='block'; document.getElementById('panelDerecho').style.display='flex'; renderTabla(); };
+                d.onclick = () => { tIdx = i; document.getElementById('mainGestion').style.display='block'; document.getElementById('panelDerecho').style.display='flex'; renderTabla(); };
                 div.appendChild(d);
             }
         });
@@ -171,18 +150,24 @@
         document.getElementById('truckTitle').innerText = "Chofer: " + db.camiones[tIdx].nombre;
         if (!db.camiones[tIdx].items) db.camiones[tIdx].items = [];
         db.camiones[tIdx].items.forEach(item => {
-            const neto = (item.ton * item.tar) * (1 - ((item.descP || 0) / 100));
+            const netoOriginal = (item.ton * item.tar);
+            const totalViaje = netoOriginal * (1 - ((item.descP || 0) / 100));
             const gasto = item.adelVal || 0;
-            const saldo = (item.tipo === 'Viaje' ? neto : 0) - gasto;
-            let fD = item.factura || '-'; let dD = item.detalle || '';
-            if(item.tipo==='Adelanto') fD=`<span style="color:#b91c1c; font-weight:bold;">ADELANTO</span>`;
-            if(item.tipo==='Pago') fD=`<span style="color:#1d4ed8; font-weight:bold;">PAGO</span>`;
-            if(item.tipo==='Gasoil') { fD=`<span style="color:#047857; font-weight:bold;">GASOIL</span>`; dD=`<strong>${item.litros||0} Lts</strong> - ${item.detalle||''}`; }
+            const saldo = (item.tipo === 'Viaje' ? totalViaje : 0) - gasto;
+            
+            let fD = item.factura || '-'; 
+            let dD = item.detalle || '';
+            let tnD = item.ton || '';
+
+            if(item.tipo==='Adelanto') { dD = `<strong>ADELANTO:</strong> ${item.detalle || ''}`; tnD = ''; }
+            if(item.tipo==='Pago') { dD = `<strong>PAGO:</strong> ${item.detalle || ''}`; tnD = ''; }
+            if(item.tipo==='Gasoil') { dD = `<strong>GASOIL (${item.litros||0} Lts):</strong> ${item.detalle||''}`; tnD = ''; }
 
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td><input type="checkbox" class="chk" data-id="${item.id}" data-neto="${item.tipo==='Viaje'?neto:0}" data-gasto="${gasto}"></td>
+            tr.innerHTML = `<td><input type="checkbox" class="chk" data-id="${item.id}" data-neto="${item.tipo==='Viaje'?totalViaje:0}" data-gasto="${gasto}"></td>
             <td><button class="status-pill ${item.estado || 'pendiente'}" onclick="cambiarEstado(${item.id})">${item.estado || 'pendiente'}</button></td>
-            <td>${item.fecha}</td><td>${fD}</td><td style="text-align:left">${dD}</td><td>${item.ton||''}</td><td>${item.tar?'$'+item.tar:''}</td><td>${item.descP||0}%</td><td>$${neto.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td><td>$${gasto.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td><td><strong>$${saldo.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>`;
+            <td>${item.fecha}</td><td>${fD}</td><td style="text-align:left">${dD}</td><td>${tnD}</td><td>${item.tar?'$'+fM(item.tar):''}</td>
+            <td>${item.descP||0}%</td><td>$${fM(totalViaje)}</td><td>$${fM(gasto)}</td><td><strong>$${fM(saldo)}</strong></td>`;
             cuerpo.appendChild(tr);
         });
         actualizarTotales();
@@ -192,7 +177,7 @@
         const item = { id: Date.now(), fecha: document.getElementById('f_fecha').value, factura: document.getElementById('f_factura').value, detalle: document.getElementById('f_detalle').value, ton: parseFloat(document.getElementById('f_ton').value)||0, tar: parseFloat(document.getElementById('f_tar').value)||0, descP: parseFloat(document.getElementById('f_desc').value)||0, adelVal: parseFloat(document.getElementById('f_monto').value)||0, tipo: document.getElementById('f_tipo').value, litros: document.getElementById('f_litros').value, estado: 'pendiente' };
         if(!db.camiones[tIdx].items) db.camiones[tIdx].items = [];
         db.camiones[tIdx].items.push(item); dbRef.set(db);
-        ['f_factura', 'f_detalle', 'f_ton', 'f_tar', 'f_monto', 'f_litros', 'f_desc'].forEach(id => document.getElementById(id).value = "");
+        ['f_factura', 'f_detalle', 'f_ton', 'f_tar', 'f_desc', 'f_monto', 'f_litros'].forEach(id => document.getElementById(id).value = "");
         document.getElementById('f_factura').focus();
     }
 
@@ -229,48 +214,15 @@
         dbRef.set(db); cancelarEdicion();
     }
 
-    function cancelarEdicion() { editId = null; ['f_factura', 'f_detalle', 'f_ton', 'f_tar', 'f_monto', 'f_litros', 'f_desc'].forEach(id => document.getElementById(id).value = ""); document.getElementById('btnGuardar').style.display = 'inline-block'; document.getElementById('btnConfirmarEdit').style.display = 'none'; document.getElementById('btnCancelarEdit').style.display = 'none'; }
+    function cancelarEdicion() { editId = null; ['f_factura', 'f_detalle', 'f_ton', 'f_tar', 'f_desc', 'f_monto', 'f_litros'].forEach(id => document.getElementById(id).value = ""); document.getElementById('btnGuardar').style.display = 'inline-block'; document.getElementById('btnConfirmarEdit').style.display = 'none'; document.getElementById('btnCancelarEdit').style.display = 'none'; }
     function eliminarSeleccionados() { if(confirm("¿Borrar seleccionados?")) { const ids = Array.from(document.querySelectorAll('.chk:checked')).map(c => parseInt(c.dataset.id)); db.camiones[tIdx].items = db.camiones[tIdx].items.filter(it => !ids.includes(it.id)); dbRef.set(db); } }
     function eliminarChofer(e, i) { e.stopPropagation(); if(confirm("¿Borrar chofer?")) { db.camiones.splice(i, 1); tIdx = null; dbRef.set(db); } }
-    function verResumenGlobal() { tIdx = null; document.getElementById('mainGestion').style.display = 'none'; document.getElementById('panelDerecho').style.display = 'none'; document.getElementById('resumenSeccion').style.display = 'block'; }
-
-    function calcularFacturacion() {
-        let nCon = 0; let nSin = 0;
-        const d = document.getElementById('resDesde').value;
-        const h = document.getElementById('resHasta').value;
-        db.camiones.forEach(c => {
-            if(c.items) {
-                c.items.forEach(it => {
-                    if(it.fecha >= d && it.fecha <= h && it.tipo === 'Viaje') {
-                        const sub = (it.ton * it.tar);
-                        nSin += sub;
-                        nCon += sub * (1 - ((it.descP || 0) / 100));
-                    }
-                });
-            }
-        });
-        const iCon = nCon * 0.21; const iSin = nSin * 0.21;
-        document.getElementById('resultadoFacturacion').innerHTML = `
-            <div class="card" style="border-left:8px solid var(--blue); padding:25px;">
-                <h3 style="color:var(--blue)">CON DESCUENTO</h3>
-                <p>Neto: $ ${nCon.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-                <p>IVA: $ ${iCon.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-                <hr><h2>TOTAL: $ ${(nCon + iCon).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</h2>
-            </div>
-            <div class="card" style="border-left:8px solid var(--orange); padding:25px;">
-                <h3 style="color:var(--orange)">SIN DESCUENTO</h3>
-                <p>Neto: $ ${nSin.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-                <p>IVA: $ ${iSin.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-                <hr><h2>TOTAL: $ ${(nSin + iSin).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</h2>
-            </div>`;
-    }
-
     function actualizarTotales() {
         const seleccionados = document.querySelectorAll('.chk:checked');
         let vT = 0, gT = 0; seleccionados.forEach(x => { vT += parseFloat(x.dataset.neto); gT += parseFloat(x.dataset.gasto); });
-        document.getElementById('sum-viajes').innerText = `$ ${vT.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        document.getElementById('sum-gastos').innerText = `$ ${gT.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        document.getElementById('liq-subtotal').innerText = `$ ${(vT - gT).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('sum-viajes').innerText = `$ ${fM(vT)}`;
+        document.getElementById('sum-gastos').innerText = `$ ${fM(gT)}`;
+        document.getElementById('liq-subtotal').innerText = `$ ${fM(vT - gT)}`;
         document.getElementById('btnEdit').disabled = seleccionados.length !== 1;
         document.getElementById('btnEdit').style.opacity = seleccionados.length !== 1 ? "0.5" : "1";
         document.getElementById('btnDel').disabled = seleccionados.length === 0;
@@ -290,18 +242,18 @@
         element.style.padding = "10px";
         element.style.backgroundColor = "white";
         const tablaClonada = document.getElementById('tablaViajes').cloneNode(true);
-        tablaClonada.style.fontSize = "10px";
+        tablaClonada.style.fontSize = "8px";
         tablaClonada.style.width = "100%";
         tablaClonada.querySelectorAll('tr').forEach(fila => {
             fila.deleteCell(0); 
             fila.deleteCell(0); 
             Array.from(fila.cells).forEach(c => {
-                c.style.padding = "4px";
+                c.style.padding = "3px";
                 c.style.border = "1px solid #ddd";
             });
         });
         element.innerHTML = `
-            <div style="text-align:center; border-bottom: 2px solid #2c3e50; margin-bottom: 10px; padding-bottom: 5px;">
+            <div style="text-align:center; border-bottom: 2px solid #34495e; margin-bottom: 10px; padding-bottom: 5px;">
                 <h2 style="margin:0; font-size: 16px;">Liquidación de Transporte - PRO Logística</h2>
                 <h3 style="margin:5px 0;">Chofer: ${chofer}</h3>
                 <p style="font-size: 10px;">Fecha: ${new Date().toLocaleDateString()}</p>
@@ -315,15 +267,7 @@
                     <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:bold;"><span>SALDO FINAL:</span> <span>${sT}</span></div>
                 </div>
             </div>`;
-        
-        const opt = {
-            margin: 10,
-            filename: `Liq_${chofer}.pdf`,
-            image: { type: 'jpeg', quality: 1 },
-            html2canvas: { scale: 3, useCORS: true, letterRendering: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-            pagebreak: { mode: 'avoid-all' }
-        };
+        const opt = { margin: 5, filename: `Liq_SINIVA_${chofer}.pdf`, image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 3, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } };
         html2pdf().set(opt).from(element).save();
     }
 </script>
